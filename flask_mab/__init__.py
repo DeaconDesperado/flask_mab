@@ -46,9 +46,10 @@ class BanditMiddleware(object):
     def init_detection(self):
         @self.app.before_request
         def detect_last_bandits():
-            bandits = request.cookies.get("bandits")
+            bandits = request.cookies.get("MAB")
             if bandits:
                 self.cookie_arms = json.loads(bandits)
+                print self.cookie_arms
 
         @self.app.after_request
         def persist_bandits(response):
@@ -86,14 +87,15 @@ class BanditMiddleware(object):
 
     def pull(self,bandit,arm):
         try:
-            self.bandits[bandit].pull(arm)
+            self.bandits[bandit].pull_arm(arm)
         except KeyError:
             #bandit does not exist
             pass
 
     def reward(self,bandit,arm,reward=1):
         try:
-            self.bandits[bandit].reward(reward)
+            print self.bandits[bandit]
+            self.bandits[bandit].reward_arm(arm,reward)
         except KeyError:
             #bandit does not exist
             pass
@@ -116,7 +118,7 @@ class BanditMiddleware(object):
         :raises KeyError: in case requested experiment does not exist
         """
         try:
-            arm = self.bandits[self.cookie_arms[key]]
+            arm = self.bandits[key][self.cookie_arms[key]]
             if also_pull:
                 self.pull(key,arm["id"])
             return arm["id"],arm["value"]
@@ -126,8 +128,15 @@ class BanditMiddleware(object):
                 self.pull(key,arm["id"])
             self.register_persist_arm(key,arm["id"])
             return arm["id"],arm["value"]
-        except KeyError:
+        except KeyError,e:
+            print e
             raise KeyError("No experiment defined for bandit key: %s" % key)
+
+    def reward_endpt(self,bandit,reward=1):
+        def decorator(f):
+            return f
+        return decorator
+
 
 #decorator for bandit suggest arm, bypass if cookie is set
 #decorator for bandit arm pull at route

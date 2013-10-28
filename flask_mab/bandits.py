@@ -25,12 +25,12 @@ class Bandit(object):
         self.reward.append(0.0)
         self.values.append(value)
 
-    def pull(self,arm_id):
+    def pull_arm(self,arm_id):
         ind = self.arms.index(arm_id)
         if ind > -1:
             self.pulls[ind] += 1
 
-    def reward(self,arm_id,reward):
+    def reward_arm(self,arm_id,reward):
         ind = self.arms.index(arm_id)
         if ind > -1:
             self.reward[ind] += reward
