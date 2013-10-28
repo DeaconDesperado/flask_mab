@@ -43,8 +43,14 @@ class MABTestCase(unittest.TestCase):
 
     def test_suggest(self):
         rv = self.app_client.get("/show_btn")
-        print self.mab["color_button"]
-        print rv.headers 
+        self.mab.debug_headers = True
+        assert "MAB-Debug" in rv.headers.keys()
+        chosen_arm = self.get_arm(rv.headers)["color_button"]
+        assert self.mab["color_button"][chosen_arm]["pulls"] > 0
+
+    def get_arm(self,headers):
+        key_vals = [h.strip() for h in headers["MAB-Debug"].split(';')[1:]]
+        return dict([tuple(tup.split(":")) for tup in key_vals])
 
 if __name__ == '__main__':
     unittest.main()

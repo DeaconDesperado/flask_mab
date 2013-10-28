@@ -72,8 +72,9 @@ class BanditMiddleware(object):
             @after_this_request
             def send_debug_header(response):
                 if self.debug_headers and self.cookie_arms:
-                    print 'debug header'
-                    response.headers['MAB-Debug'] = ';'.join(['%s:%s' % (key,val) for key,val in self.cookie_arms.items()])
+                    response.headers['MAB-Debug'] = "SAVED; "+';'.join(['%s:%s' % (key,val) for key,val in self.cookie_arms.items()])
+                elif self.debug_headers and hasattr(g,'arm_pulls_to_register'):
+                    response.headers['MAB-Debug'] = "STORE; "+';'.join(['%s:%s' % (key,val) for key,val in g.arm_pulls_to_register.items()])
                 return response
 
     def add_bandit(self,name,bandit=None):
