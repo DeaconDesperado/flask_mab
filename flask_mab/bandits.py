@@ -11,7 +11,6 @@ class Bandit(object):
         bandit.pulls = dict_spec["pulls"]
         bandit.reward = dict_spec["reward"]
         bandit.values = dict_spec["values"]
-        print bandit
         return bandit
 
     def __init__(self):
@@ -42,7 +41,7 @@ class Bandit(object):
 
     def __getitem__(self,key):
         ind = self.arms.index(key)
-        if ind:
+        if ind > -1:
             arm = {
                     "id":self.arms[ind],
                     "pulls":self.pulls[ind],
@@ -58,9 +57,6 @@ class Bandit(object):
         output += '; '.join([ '%s:%s' % (key,val) for key,val in self.__dict__.items() ])
         return output
 
-
-
-
 class EpsilonGreedyBandit(Bandit):
     
     def __init__(self,epsilon=0.1):
@@ -69,7 +65,7 @@ class EpsilonGreedyBandit(Bandit):
 
     def suggest_arm(self):
         random_determination = random()
-        if random_determination > self.epsilon():
+        if random_determination > self.epsilon:
             key = self._ind_max()
         else:
             key = choice(self.arms)
@@ -77,5 +73,4 @@ class EpsilonGreedyBandit(Bandit):
         return self[key]
 
     def _ind_max(self):
-        #return the armid of the current winner
-        pass
+        return self.arms[0] 

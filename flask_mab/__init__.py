@@ -18,7 +18,7 @@ class BanditMiddleware(object):
         if app is not None:
             self.init_app(app)
         self.bandits = {} 
-        self.cookie_bandits = None
+        self.cookie_arms = None
         if not storage:
             raise Exception("Must pass a storage engine to persist bandit vals")
         else:
@@ -48,7 +48,7 @@ class BanditMiddleware(object):
         def detect_last_bandits():
             bandits = request.cookies.get("bandits")
             if bandits:
-                self.cookie_bandits = json.loads(bandits)
+                self.cookie_arms = json.loads(bandits)
 
         @self.app.after_request
         def persist_bandits(response):
@@ -71,8 +71,8 @@ class BanditMiddleware(object):
 
             @after_this_request
             def send_debug_header(response):
-                if self.debug_headers and self.cookie_bandits:
-                    response.headers['MAB-Debug'] = ';'.join(['%s:%s' % (key,val) for key,val in self.cookie_bandits.items()])
+                if self.debug_headers and self.cookie_arms:
+                    response.headers['MAB-Debug'] = ';'.join(['%s:%s' % (key,val) for key,val in self.cookie_arms.items()])
                 return response
 
     def add_bandit(self,name,bandit=None):
@@ -111,9 +111,9 @@ class BanditMiddleware(object):
         :raises KeyError: in case requested experiment does not exist
         """
         try:
-            arm = self.bandits[self.cookie_bandits[key]]
+            arm = self.bandits[self.cookie_arms[key]]
             return arm["id"],arm["value"]
-        except AttributeError:
+        except (AttributeError,TypeError):
             #no cookie vals
             arm = self.bandits[key].suggest_arm()
             self.register_persist_arm(key,arm["id"])
