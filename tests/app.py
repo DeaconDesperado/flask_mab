@@ -23,7 +23,6 @@ class MABTestCase(unittest.TestCase):
         app = flask.Flask('test_app')
         mab = flask_mab.BanditMiddleware(app,banditStorage)
         mab.add_bandit('color_button', makeBandit())
-
         app.debug = True
 
         @app.route("/")
@@ -34,12 +33,17 @@ class MABTestCase(unittest.TestCase):
         def assign_arm():
             assigned_arm = mab.suggest_arm_for("color_button",True)
             return flask.make_response("arm")
-
+        
         @app.route("/reward")
-        @mab.reward_endpt("color_button")
         def reward_cookie_arm():
             assigned_arm = mab.suggest_arm_for("color_button")
             mab.reward("color_button",assigned_arm[0],1.0)
+            return flask.make_response("awarded the arm")
+
+        @app.route("/reward_decorated")
+        @mab.reward_endpt("color_button",1.0)
+        def reward_decorated():
+            assigned_arm = mab.suggest_arm_for("color_button")
             return flask.make_response("awarded the arm")
 
         self.app = app
@@ -62,7 +66,17 @@ class MABTestCase(unittest.TestCase):
     def test_from_cookie(self):
         first_req = self.app_client.get("/show_btn")
         assert "MAB-Debug" in first_req.headers.keys()
+        chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
         self.app_client.get("/reward")
+        assert self.mab["color_button"][chosen_arm]["reward"] > 0
+
+    def test_from_cookie_reward_decorated(self):
+        first_req = self.app_client.get("/show_btn")
+        assert "MAB-Debug" in first_req.headers.keys()
+        chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
+        self.app_client.get("/reward_decorated")
+        assert self.mab["color_button"][chosen_arm]["reward"] > 0
+
 
     def get_arm(self,headers):
         key_vals = [h.strip() for h in headers["MAB-Debug"].split(';')[1:]]

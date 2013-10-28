@@ -19,6 +19,7 @@ class BanditMiddleware(object):
             self.init_app(app)
         self.bandits = {} 
         self.cookie_arms = None
+        self.reward_endpts = []
         if not storage:
             raise Exception("Must pass a storage engine to persist bandit vals")
         else:
@@ -44,12 +45,12 @@ class BanditMiddleware(object):
         pass
 
     def init_detection(self):
+
         @self.app.before_request
         def detect_last_bandits():
             bandits = request.cookies.get("MAB")
             if bandits:
                 self.cookie_arms = json.loads(bandits)
-                print self.cookie_arms
 
         @self.app.after_request
         def persist_bandits(response):
@@ -64,6 +65,13 @@ class BanditMiddleware(object):
 
         @self.app.before_request
         def after_callbacks():
+            @after_this_request
+            def run_reward_decorators(response):
+                for func,bandit,reward in self.reward_endpts:
+                    if request.endpoint == func.__name__:
+                        self.reward(bandit,self.cookie_arms[bandit],1.0)
+                return response
+
             @after_this_request
             def remember_bandit_arms(response):
                 if hasattr(g,'arm_pulls_to_register'):
@@ -94,7 +102,6 @@ class BanditMiddleware(object):
 
     def reward(self,bandit,arm,reward=1):
         try:
-            print self.bandits[bandit]
             self.bandits[bandit].reward_arm(arm,reward)
         except KeyError:
             #bandit does not exist
@@ -129,11 +136,11 @@ class BanditMiddleware(object):
             self.register_persist_arm(key,arm["id"])
             return arm["id"],arm["value"]
         except KeyError,e:
-            print e
             raise KeyError("No experiment defined for bandit key: %s" % key)
 
     def reward_endpt(self,bandit,reward=1):
         def decorator(f):
+            self.reward_endpts.append((f,bandit,reward)) 
             return f
         return decorator
 
