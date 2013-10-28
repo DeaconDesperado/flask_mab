@@ -4,11 +4,15 @@ class Bandit(object):
 
     @classmethod
     def fromdict(cls,dict_spec):
-        bandit = cls.__init__(self)
+        extra_args = dict([(key,value) for key,value in dict_spec.items() if key not in ["arms","pulls","reward","values","bandit_type"]])
+
+        bandit = globals()[dict_spec["bandit_type"]](**extra_args)
         bandit.arms = dict_spec["arms"]
         bandit.pulls = dict_spec["pulls"]
         bandit.reward = dict_spec["reward"]
         bandit.values = dict_spec["values"]
+        print bandit
+        return bandit
 
     def __init__(self):
         self.arms = []
@@ -49,12 +53,18 @@ class Bandit(object):
         else:
             raise KeyError("Arm is not found in this bandit")
 
+    def __str__(self):
+        output = '%s  ' % self.__class__.__name__
+        output += '; '.join([ '%s:%s' % (key,val) for key,val in self.__dict__.items() ])
+        return output
+
+
 
 
 class EpsilonGreedyBandit(Bandit):
     
-    def __init__(self,epsilon):
-        super(self,EpsilonGreedyBandit).__init__(self)
+    def __init__(self,epsilon=0.1):
+        super(EpsilonGreedyBandit,self).__init__()
         self.epsilon = epsilon
 
     def suggest_arm(self):
