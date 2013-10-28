@@ -8,7 +8,6 @@ from flask_mab.bandits import EpsilonGreedyBandit
 
 from werkzeug.http import parse_cookie
 import json
-
     
 def makeBandit():
     bandit = EpsilonGreedyBandit(0.1)
@@ -54,7 +53,6 @@ class MABTestCase(unittest.TestCase):
         self.app = app
         self.mab = mab
         self.app_client = app.test_client()
-
 
     def test_routing(self):
         rv = self.app_client.get("/")

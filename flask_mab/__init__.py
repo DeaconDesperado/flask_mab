@@ -32,7 +32,6 @@ class BanditMiddleware(object):
         :param app: A flask application instance
         """
         #config cookie name, cookie settings like lifetime etc
-        #persistence info, zodb?
         if hasattr(app, 'teardown_appcontext'):
             app.teardown_appcontext(self.teardown)
         else:
@@ -46,7 +45,6 @@ class BanditMiddleware(object):
         pass
 
     def init_detection(self):
-
 
         @self.app.before_request
         def pull_decorated_arms():
@@ -157,7 +155,3 @@ class BanditMiddleware(object):
             self.pull_endpts.append((f,bandit)) 
             return f
         return decorator
-
-#decorator for bandit suggest arm, bypass if cookie is set
-#decorator for bandit arm pull at route
-#decorator for bandit arm reward at route
