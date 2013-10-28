@@ -1,3 +1,5 @@
+from random import random,choice
+
 class Bandit(object):
 
     @classmethod
@@ -31,7 +33,8 @@ class Bandit(object):
             self.reward[ind] += reward
 
     def suggest_arm(self):
-        raise NotImplementedError()
+        """Uniform random for default bandit"""
+        return self[random.choice(self.arms)]
 
     def __getitem__(self,key):
         ind = self.arms.index(key)
@@ -49,4 +52,20 @@ class Bandit(object):
 
 
 class EpsilonGreedyBandit(Bandit):
-    pass
+    
+    def __init__(self,epsilon):
+        super(self,EpsilonGreedyBandit).__init__(self)
+        self.epsilon = epsilon
+
+    def suggest_arm(self):
+        random_determination = random()
+        if random_determination > self.epsilon():
+            key = self._ind_max()
+        else:
+            key = choice(self.arms)
+
+        return self[key]
+
+    def _ind_max(self):
+        #return the armid of the current winner
+        pass

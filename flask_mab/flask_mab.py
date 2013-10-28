@@ -1,60 +1,120 @@
-from flask import current_app
+from flask import current_app,g,request
 import json
 from bandits import *
-
 try:
     from flask import _app_ctx_stack as stack
 except ImportError:
     from flask import _request_ctx_stack as stack
 
+def after_this_request(f):
+    if not hasattr(g, 'after_request_callbacks'):
+        g.after_request_callbacks = []
+    g.after_request_callbacks.append(f)
+    return f
+
 class BanditMiddleware(object):
-    def __init__(self,app):
+    def __init__(self,app,storage):
         self.app = app
         if app is not None:
             self.init_app(app)
+        self.bandits = {} 
+        self.cookie_bandits = None
+        if not storage:
+            raise Exception("Must pass a storage engine to persist bandit vals")
+        else:
+            self.storage = storage
 
     def init_app(self,app):
         """Attach Multi Armed Bandit to application and configure
 
         :param app: A flask application instance
         """
-        #cookie name, cookie settings like lifetime etc
+        #config cookie name, cookie settings like lifetime etc
         #persistence info, zodb?
-        #before after handlers for bandit pull
-        #debug header
         if hasattr(app, 'teardown_appcontext'):
             app.teardown_appcontext(self.teardown)
         else:
             app.teardown_request(self.teardown)
         
-        #register beforerequest cookie check
+        #TODO: change this to be config based
+        self.debug_headers = True
+        self.init_detection()
 
-    def add_bandit(self,name,bandit):
-        #if is list plural, else single
-        #check persistence for every id, and if not present, init @ 0 for vals
-        #if present, use Bandit.fromdict
-        pass
+    def init_detection(self):
+        @self.app.before_request
+        def detect_last_bandits():
+            bandits = request.cookies.get("bandits")
+            if bandits:
+                self.cookie_bandits = json.loads(bandits)
 
-    def teardown(self):
-        #persist values
-        #set cookie for persist
-        pass
+        @self.app.after_request
+        def persist_bandits(self):
+            self.storage.save(self.bandits)
 
-    def get_value(self,bandit):
-        bandit = self[bandit]
-        #return determined cookie arm for specified bandit
-    
-    def reward(self,bandit):
-        #reward the cookie bandit arm for specified bandit
-        pass
+        @self.app.after_request
+        def call_after_request_callbacks(response):
+            for callback in getattr(g, 'after_request_callbacks', ()):
+                callback(response)
+            return response
+
+        @after_this_request
+        def remember_bandit_arms(response):
+            if hasattr(g,'arm_pulls_to_register'):
+                response.set_cookie("MAB",json.dumps(g.arm_pulls_to_register))
+
+        @after_this_request
+        def send_debug_header(response):
+            if self.debug_headers and self.cookie_bandits:
+                response.headers['MAB-Debug'] = ';'.join(['%s:%s' % (key,val) for key,val in self.cookie_bandits.items()])
+
+
+    def add_bandit(self,name,bandit=None):
+        saved_bandits = storage.load()
+        if name in saved_bandits.keys():
+            self.bandits[name] = saved_bandits[name]
+        else:
+            self.bandits[name] = bandit 
+
+    def pull(self,bandit,arm):
+        try:
+            self.bandits[bandit].pull(arm)
+        except KeyError:
+            #bandit does not exist
+            pass
+
+    def reward(self,bandit,arm,reward=1):
+        try:
+            self.bandits[bandit].reward(reward)
+        except KeyError:
+            #bandit does not exist
+            pass
+
+    def register_persist_arm(self,bandit_id,arm_id):
+        #persist bandit val in after request callback
+        if not hasattr(g,'arm_pulls_to_register'):
+            g.arm_pulls_to_register = {}
+        g.arm_pulls_to_register[bandit_id] = arm_id
 
     def __getitem__(self,key):
-        #get bandit by key
-        pass
+        """Get an experimental outcome by id.  The primary way the implementor interfaces with their
+        experiments.
 
-    def __setitem__(self,key,bandit):
-        #set bandit by key
-        pass
+        Suggests arms if not in cookie, using cookie val if present
+
+        :raises KeyError: in case requested experiment does not exist
+        """
+        try:
+            arm = self.bandits[self.cookie_bandits[key]]
+            return arm["id"],arm["value"]
+        except AttributeError:
+            #no cookie vals
+            arm = self.bandits[key].suggest_arm()
+            self.register_persist_arm(key,arm["id"])
+            return arm["id"],arm["value"]
+        except KeyError:
+            #bandit does not exist
+            pass
+
 
 #decorator for bandit suggest arm, bypass if cookie is set
 #decorator for bandit arm pull at route
