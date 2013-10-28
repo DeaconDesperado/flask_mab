@@ -18,7 +18,9 @@ class BanditDecoder(json.JSONDecoder):
             dict_repr[key] = bandits.Bandit.fromdict(dict_repr[key])
         return dict_repr
 
-class JSONBanditStorage(object):
+class BanditStorage: pass
+
+class JSONBanditStorage(BanditStorage):
     def __init__(self,filepath):
         self.file_handle = filepath
 

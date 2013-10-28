@@ -1,6 +1,8 @@
 from flask import current_app,g,request
 import json
 from bandits import *
+from storage import BanditStorage
+
 try:
     from flask import _app_ctx_stack as stack
 except ImportError:
@@ -21,8 +23,8 @@ class BanditMiddleware(object):
         self.cookie_arms = None
         self.reward_endpts = []
         self.pull_endpts = []
-        if not storage:
-            raise Exception("Must pass a storage engine to persist bandit vals")
+        if not storage or not isinstance(storage,BanditStorage):
+            raise MABConfigException("Must pass a storage engine to persist bandit vals")
         else:
             self.storage = storage
 
@@ -155,3 +157,6 @@ class BanditMiddleware(object):
             self.pull_endpts.append((f,bandit)) 
             return f
         return decorator
+
+
+class MABConfigException(Exception):pass
