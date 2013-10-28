@@ -27,12 +27,12 @@ class Bandit(object):
 
     def pull(self,arm_id):
         ind = self.arms.index(arm_id)
-        if ind:
+        if ind > -1:
             self.pulls[ind] += 1
 
     def reward(self,arm_id,reward):
         ind = self.arms.index(arm_id)
-        if ind:
+        if ind > -1:
             self.reward[ind] += reward
 
     def suggest_arm(self):
@@ -74,3 +74,9 @@ class EpsilonGreedyBandit(Bandit):
 
     def _ind_max(self):
         return self.arms[0] 
+
+    def __str__(self):
+        return Bandit.__str__(self)
+
+    def __repr(self):
+        return Bandit.__str__(self)

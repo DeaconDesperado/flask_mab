@@ -11,7 +11,6 @@ def makeBandit():
     bandit = EpsilonGreedyBandit(0.1)
     bandit.add_arm("green","#00FF00")
     bandit.add_arm("red","#FF0000")
-    print bandit.arms
     return bandit
 
 
@@ -32,6 +31,7 @@ class MABTestCase(unittest.TestCase):
         @app.route("/show_btn")
         def assign_arm():
             assigned_arm = mab["color_button"]
+            mab.pull("color_button",assigned_arm[0])
             return flask.make_response("arm")
 
         self.app = app.test_client()
