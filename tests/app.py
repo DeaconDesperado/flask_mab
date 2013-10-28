@@ -6,13 +6,15 @@ from flask_mab import BanditMiddleware
 import flask_mab.storage
 from flask_mab.bandits import EpsilonGreedyBandit
 
+from werkzeug.http import parse_cookie
+import json
+
     
 def makeBandit():
     bandit = EpsilonGreedyBandit(0.1)
     bandit.add_arm("green","#00FF00")
     bandit.add_arm("red","#FF0000")
     return bandit
-
 
 class MABTestCase(unittest.TestCase):
 
@@ -43,10 +45,12 @@ class MABTestCase(unittest.TestCase):
 
     def test_suggest(self):
         rv = self.app_client.get("/show_btn")
+        assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
         self.mab.debug_headers = True
         assert "MAB-Debug" in rv.headers.keys()
         chosen_arm = self.get_arm(rv.headers)["color_button"]
         assert self.mab["color_button"][chosen_arm]["pulls"] > 0
+        assert json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["color_button"] == chosen_arm
 
     def get_arm(self,headers):
         key_vals = [h.strip() for h in headers["MAB-Debug"].split(';')[1:]]
