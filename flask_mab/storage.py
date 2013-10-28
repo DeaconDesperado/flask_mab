@@ -22,6 +22,9 @@ class JSONBanditStorage(object):
     def __init__(self,filepath):
         self.file_handle = filepath
 
+    def flush(self):
+        open(self.file_handle,'w').truncate()
+
     def save(self,bandits):
         json_bandits = json.dumps(bandits,indent=4,cls=BanditEncoder)
         open(self.file_handle,'w').write(json_bandits)

@@ -33,6 +33,11 @@ class MABTestCase(unittest.TestCase):
         def assign_arm():
             assigned_arm = mab.suggest_arm_for("color_button",True)
             return flask.make_response("arm")
+
+        @app.route("/show_btn_decorated")
+        @mab.choose_arm("color_button")
+        def assign_arm_decorated():
+            return flask.make_response("assigned an arm")
         
         @app.route("/reward")
         def reward_cookie_arm():
@@ -50,14 +55,24 @@ class MABTestCase(unittest.TestCase):
         self.mab = mab
         self.app_client = app.test_client()
 
+
     def test_routing(self):
         rv = self.app_client.get("/")
         assert "Hello" in rv.data
 
     def test_suggest(self):
+        self.mab.debug_headers = True
         rv = self.app_client.get("/show_btn")
         assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
+        assert "MAB-Debug" in rv.headers.keys()
+        chosen_arm = self.get_arm(rv.headers)["color_button"]
+        assert self.mab["color_button"][chosen_arm]["pulls"] > 0
+        assert json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["color_button"] == chosen_arm
+
+    def test_suggest_decorated(self):
         self.mab.debug_headers = True
+        rv = self.app_client.get("/show_btn_decorated")
+        assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
         assert "MAB-Debug" in rv.headers.keys()
         chosen_arm = self.get_arm(rv.headers)["color_button"]
         assert self.mab["color_button"][chosen_arm]["pulls"] > 0
@@ -76,7 +91,6 @@ class MABTestCase(unittest.TestCase):
         chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
         self.app_client.get("/reward_decorated")
         assert self.mab["color_button"][chosen_arm]["reward"] > 0
-
 
     def get_arm(self,headers):
         key_vals = [h.strip() for h in headers["MAB-Debug"].split(';')[1:]]

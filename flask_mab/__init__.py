@@ -20,6 +20,7 @@ class BanditMiddleware(object):
         self.bandits = {} 
         self.cookie_arms = None
         self.reward_endpts = []
+        self.pull_endpts = []
         if not storage:
             raise Exception("Must pass a storage engine to persist bandit vals")
         else:
@@ -45,6 +46,13 @@ class BanditMiddleware(object):
         pass
 
     def init_detection(self):
+
+
+        @self.app.before_request
+        def pull_decorated_arms():
+            for func,bandit in self.pull_endpts:
+                if request.endpoint == func.__name__:
+                    self.suggest_arm_for(bandit,True)
 
         @self.app.before_request
         def detect_last_bandits():
@@ -144,6 +152,11 @@ class BanditMiddleware(object):
             return f
         return decorator
 
+    def choose_arm(self,bandit):
+        def decorator(f):
+            self.pull_endpts.append((f,bandit)) 
+            return f
+        return decorator
 
 #decorator for bandit suggest arm, bypass if cookie is set
 #decorator for bandit arm pull at route
