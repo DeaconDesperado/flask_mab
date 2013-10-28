@@ -72,6 +72,7 @@ class BanditMiddleware(object):
             @after_this_request
             def send_debug_header(response):
                 if self.debug_headers and self.cookie_arms:
+                    print 'debug header'
                     response.headers['MAB-Debug'] = ';'.join(['%s:%s' % (key,val) for key,val in self.cookie_arms.items()])
                 return response
 
@@ -103,6 +104,9 @@ class BanditMiddleware(object):
         g.arm_pulls_to_register[bandit_id] = arm_id
 
     def __getitem__(self,key):
+        return self.bandits[key]
+
+    def suggest_arm_for(self,key,also_pull=False):
         """Get an experimental outcome by id.  The primary way the implementor interfaces with their
         experiments.
 
@@ -112,16 +116,17 @@ class BanditMiddleware(object):
         """
         try:
             arm = self.bandits[self.cookie_arms[key]]
+            if also_pull:
+                self.pull(key,arm["id"])
             return arm["id"],arm["value"]
         except (AttributeError,TypeError):
-            #no cookie vals
             arm = self.bandits[key].suggest_arm()
+            if also_pull:
+                self.pull(key,arm["id"])
             self.register_persist_arm(key,arm["id"])
             return arm["id"],arm["value"]
         except KeyError:
-            #bandit does not exist
-            pass
-
+            raise KeyError("No experiment defined for bandit key: %s" % key)
 
 #decorator for bandit suggest arm, bypass if cookie is set
 #decorator for bandit arm pull at route

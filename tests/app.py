@@ -30,19 +30,21 @@ class MABTestCase(unittest.TestCase):
 
         @app.route("/show_btn")
         def assign_arm():
-            assigned_arm = mab["color_button"]
-            mab.pull("color_button",assigned_arm[0])
+            assigned_arm = mab.suggest_arm_for("color_button",True)
             return flask.make_response("arm")
 
-        self.app = app.test_client()
+        self.app = app
+        self.mab = mab
+        self.app_client = app.test_client()
 
     def test_routing(self):
-        rv = self.app.get("/")
+        rv = self.app_client.get("/")
         assert "Hello" in rv.data
 
     def test_suggest(self):
-        rv = self.app.get("/show_btn")
-        print rv.headers
+        rv = self.app_client.get("/show_btn")
+        print self.mab["color_button"]
+        print rv.headers 
 
 if __name__ == '__main__':
     unittest.main()

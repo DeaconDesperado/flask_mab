@@ -73,7 +73,7 @@ class EpsilonGreedyBandit(Bandit):
         return self[key]
 
     def _ind_max(self):
-        return self.arms[0] 
+        return choice(self.arms) 
 
     def __str__(self):
         return Bandit.__str__(self)
