@@ -76,16 +76,16 @@ class EpsilonGreedyBandit(Bandit):
         values = []
         for ind,n in enumerate(self.pulls):
             reward = self.reward[ind]
-            if n is 0 or reward is 0:
+            if n < 1 or reward < 1:
                 values.append(0)
                 continue
             this_reward = (n - 1) / float(n) * reward + (1 / float(n)) * reward
             values.append(this_reward)
+        #print self.arms,self.pulls,self.reward,values
         return values
 
     def _ind_max(self):
         avg_reward = self.running_avg()
-        print max(avg_reward)
         return self.arms[avg_reward.index(max(avg_reward))]
 
     def __str__(self):
@@ -93,3 +93,7 @@ class EpsilonGreedyBandit(Bandit):
 
     def __repr(self):
         return Bandit.__str__(self)
+
+class NaiveStochasticBandit(Bandit):
+    pass
+

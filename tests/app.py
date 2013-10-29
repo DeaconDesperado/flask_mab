@@ -8,13 +8,7 @@ from flask_mab.bandits import EpsilonGreedyBandit
 
 from werkzeug.http import parse_cookie
 import json
-    
-def makeBandit():
-    bandit = EpsilonGreedyBandit(0.1)
-    bandit.add_arm("green","#00FF00")
-    bandit.add_arm("red","#FF0000")
-    bandit.add_arm("blue","#0000FF")
-    return bandit
+from test_utils import makeBandit
 
 class MABTestCase(unittest.TestCase):
 
@@ -22,7 +16,7 @@ class MABTestCase(unittest.TestCase):
         banditStorage = flask_mab.storage.JSONBanditStorage('./bandits.json')
         app = flask.Flask('test_app')
         mab = flask_mab.BanditMiddleware(app,banditStorage)
-        mab.add_bandit('color_button', makeBandit())
+        mab.add_bandit('color_button', makeBandit("EpsilonGreedyBandit",epsilon=0.1))
         app.debug = True
 
         @app.route("/")
