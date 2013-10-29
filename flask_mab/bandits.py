@@ -2,6 +2,11 @@ from random import random,choice,uniform
 from math import log
 
 class Bandit(object):
+    """The primary bandit interface.  Don't use this unless you really
+    want uniform random arm selection (which defeats the whole purpose, really)
+
+    Used as a control to test against and as an interface to define methods against.
+    """
 
     @classmethod
     def fromdict(cls,dict_spec):
@@ -59,8 +64,22 @@ class Bandit(object):
         return output
 
 class EpsilonGreedyBandit(Bandit):
+    """Epsilon Greedy Bandit implementation.  Aggressively favors the present winner.
+
+    Will assign winning arm 1.0 - epsilon of the time, uniform random between arms
+    epsilon % of the time.
+
+    Will "exploit" the present winner more often with lower values of epsilon, "explore"
+    other candidates more often with higher values of epsilon.
+
+    """
     
     def __init__(self,epsilon=0.1):
+        """Initliaze an experiment with an epsilon greedy bandit
+
+        :param epsilon: The percentage of the time to "explore" other arms
+        :type epsilon: float
+        """
         super(EpsilonGreedyBandit,self).__init__()
         self.epsilon = epsilon
 
@@ -73,7 +92,7 @@ class EpsilonGreedyBandit(Bandit):
 
         return self[key]
 
-    def running_avg(self):
+    def _running_avg(self):
         values = []
         for ind,n in enumerate(self.pulls):
             reward = self.reward[ind]
@@ -86,7 +105,7 @@ class EpsilonGreedyBandit(Bandit):
         return values
 
     def _ind_max(self):
-        avg_reward = self.running_avg()
+        avg_reward = self._running_avg()
         return self.arms[avg_reward.index(max(avg_reward))]
 
     def __str__(self):
@@ -99,6 +118,13 @@ def all_same(items):
     return all(x == items[0] for x in items)
 
 class NaiveStochasticBandit(Bandit):
+    """A naive weighted random Bandit.  Favors the winner by giving it greater weight
+    in random selection.  
+
+    Good for experiments that should have final settled state (long or indefinite deploys.)
+
+    Winner will eventually flatten out the losers if margin is great enough
+    """
 
     def __init__(self):
         super(NaiveStochasticBandit,self).__init__()
