@@ -171,7 +171,7 @@ class BanditMiddleware(object):
         :type arm: string
         """
         try:
-            self.bandits[bandit].reward_arm(arm,reward)
+            self.bandits[bandit_id].reward_arm(arm,reward)
         except KeyError:
             #bandit does not exist
             pass
