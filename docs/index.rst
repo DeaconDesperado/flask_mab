@@ -54,6 +54,7 @@ Any problem you can model in your app logic can be optimized using the bandit al
    flask_mab
    bandits
    storage
+   roadmap
 
 
 Indices and tables

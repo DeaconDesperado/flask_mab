@@ -13,6 +13,7 @@ def makeBandit():
     bandit = EpsilonGreedyBandit(0.1)
     bandit.add_arm("green","#00FF00")
     bandit.add_arm("red","#FF0000")
+    bandit.add_arm("blue","#0000FF")
     return bandit
 
 class MABTestCase(unittest.TestCase):
