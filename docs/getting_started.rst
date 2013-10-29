@@ -41,6 +41,8 @@ Let's start setting up our bandit file storage::
 
 This storage instance will be passed into our bandit middleware and all values that need to be persisted will be handled under the hood.
 
+An important side note: if you change your bandit setup down the line, be sure to remove this persisted file, per the :doc:`caveats`
+
 Create bandits and assigning arms
 ---------------------------------
 

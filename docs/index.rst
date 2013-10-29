@@ -55,6 +55,7 @@ Any problem you can model in your app logic can be optimized using the bandit al
    bandits
    storage
    roadmap
+   caveats
 
 
 Indices and tables
