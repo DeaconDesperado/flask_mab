@@ -57,13 +57,18 @@ class BanditMiddleware(object):
         :param app: A flask application instance
         """
         #config cookie name, cookie settings like lifetime etc
+        app.config.setdefault('MAB_COOKIE_NAME','MAB')
+        app.config.setdefault('MAB_COOKIE_PATH','/')
+        app.config.setdefault('MAB_COOKIE_TTL',None)
+        app.config.setdefault('MAB_DEBUG_HEADERS',True)
         if hasattr(app, 'teardown_appcontext'):
             app.teardown_appcontext(self.teardown)
         else:
             app.teardown_request(self.teardown)
         
         #TODO: change this to be config based
-        self.debug_headers = True
+        self.debug_headers = app.config.get('MAB_DEBUG_HEADERS')
+        self.cookie_name = app.config.get('MAB_COOKIE_NAME')
         self._init_detection()
 
     def teardown(self,*args,**kwargs):
@@ -98,7 +103,7 @@ class BanditMiddleware(object):
 
         @self.app.before_request
         def detect_last_bandits():
-            bandits = request.cookies.get("MAB")
+            bandits = request.cookies.get(self.cookie_name)
             if bandits:
                 self.cookie_arms = json.loads(bandits)
 
@@ -125,7 +130,7 @@ class BanditMiddleware(object):
             @after_this_request
             def remember_bandit_arms(response):
                 if hasattr(g,'arm_pulls_to_register'):
-                    response.set_cookie("MAB",json.dumps(g.arm_pulls_to_register))
+                    response.set_cookie(self.cookie_name,json.dumps(g.arm_pulls_to_register))
                 return response
 
             @after_this_request
