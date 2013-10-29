@@ -9,6 +9,9 @@ from flask_mab.bandits import EpsilonGreedyBandit
 from werkzeug.http import parse_cookie
 import json
 from test_utils import makeBandit
+from threading import Thread
+from multiprocessing import Pool
+from copy import copy
 
 class MABTestCase(unittest.TestCase):
 
@@ -88,6 +91,44 @@ class MABTestCase(unittest.TestCase):
     def get_arm(self,headers):
         key_vals = [h.strip() for h in headers["MAB-Debug"].split(';')[1:]]
         return dict([tuple(tup.split(":")) for tup in key_vals])
+
+    def test_new_session(self):
+        first_req = self.app_client.get("/show_btn")
+        assert first_req.headers['MAB-Debug'].split(';')[0].strip() == 'STORE'
+        self.app_client.cookie_jar.clear()
+        second_req = self.app_client.get("/show_btn")
+        assert second_req.headers['MAB-Debug'].split(';')[0].strip() == 'STORE'
+
+    def test_repeating_session(self):
+        first_req = self.app_client.get("/show_btn")
+        for i in xrange(30):
+            req = self.app_client.get("/show_btn")
+            assert req.headers['MAB-Debug'].split(';')[0].strip() == 'SAVED'
+
+    def test_concurrency(self):
+        def request_the_shit_out_of_it(test,iden):
+            client = test.app.test_client()
+            first_req = client.get("/show_btn")
+            chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
+            assert first_req.headers['MAB-Debug'].split(';')[0].strip() == 'STORE'
+            for i in xrange(400):
+                req = client.get("/show_btn")
+                #TODO: refactor this to regex
+                assert req.headers['MAB-Debug'].split(';')[1].split(':')[1] == chosen_arm
+                assert req.headers['MAB-Debug'].split(';')[0].strip() == 'SAVED'
+            client.cookie_jar.clear()
+            final_req = client.get("/show_btn")
+            assert final_req.headers['MAB-Debug'].split(';')[0].strip() == 'STORE'
+
+
+        test_thread_1 = Thread(target=request_the_shit_out_of_it, args=(self,'A'))
+        test_thread_2 = Thread(target=request_the_shit_out_of_it, args=(self,'B'))
+        test_thread_1.start()
+        test_thread_2.start()
+        test_thread_1.join()
+        test_thread_2.join()
+
+
 
 if __name__ == '__main__':
     unittest.main()

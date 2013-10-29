@@ -110,6 +110,7 @@ class BanditMiddleware(object):
 
         @self.app.before_request
         def detect_last_bandits():
+            #TODO: figure out a way to generalize this request assignment at all stages
             bandits = request.cookies.get(self.cookie_name)
             if bandits:
                 request.cookie_arms = json.loads(bandits)
@@ -196,7 +197,6 @@ class BanditMiddleware(object):
         """
         if not hasattr(g,'arm_pulls_to_register'):
             g.arm_pulls_to_register = {}
-        print 'persist'
         g.arm_pulls_to_register[bandit_id] = arm_id
 
     def __getitem__(self,key):
@@ -229,7 +229,6 @@ class BanditMiddleware(object):
             self._register_persist_arm(key,arm["id"])
             return arm["id"],arm["value"]
         except KeyError,e:
-            print e
             raise KeyError("No experiment defined for bandit key: %s" % key)
 
     def reward_endpt(self,bandit,reward=1):
