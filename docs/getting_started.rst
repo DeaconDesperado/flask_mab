@@ -84,7 +84,7 @@ arms and update the bandits so the state of the experiment starts adjusting in r
 
 Again, boilerplate here could be easily cut down, but here is a rough example::
 
-    from flask import Flask,route,render_template
+    from flask import Flask,render_template
     from flask.ext.mab import BanditMiddleware
 
     app = Flask('test_app')
@@ -124,7 +124,7 @@ To make use of the signal methods, all we need do is instruct the middleware whe
         return render_template("ui.html",btn_color=color,btn_text=txt)
 
     @app.route("/btnclick")
-    def home():
+    def reward():
         """Button was clicked!"""
         mab.reward("color_btn",1.0)
         mab.reward("txt_btn",1.0)
@@ -164,7 +164,7 @@ Using the decorators, the two routes above could be rewritten::
     @app.route("/btnclick")
     @mab.reward_endpt("color_btn",1.0)
     @mab.reward_endpt("txt_btn",1.0)
-    def home():
+    def reward():
         """Button was clicked!"""
         return render_template("btnclick.html")
 
