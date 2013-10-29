@@ -1,4 +1,5 @@
 from random import random,choice,uniform
+from math import log
 
 class Bandit(object):
 
@@ -94,6 +95,9 @@ class EpsilonGreedyBandit(Bandit):
     def __repr(self):
         return Bandit.__str__(self)
 
+def all_same(items):
+    return all(x == items[0] for x in items)
+
 class NaiveStochasticBandit(Bandit):
 
     def __init__(self):
@@ -104,7 +108,7 @@ class NaiveStochasticBandit(Bandit):
         for ind,n in enumerate(self.pulls):
             reward = self.reward[ind]
             try:
-                weights.append(float(reward)/float(n))
+                weights.append(1.0 * (float(reward)/float(n)))
             except ZeroDivisionError:
                 weights.append(1.0/len(self.arms))
         return weights
