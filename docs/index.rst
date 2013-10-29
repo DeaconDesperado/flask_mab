@@ -6,6 +6,8 @@
 Intro
 =====================================
 
+`Full source code <http://github.com/deacondesperado/flask_mab>`_.
+
 Flask-MAB is an implementation of multi-armed bandit test pattern as a flask middleware.
 
 It can be used to test the effectiveness of virtually any parts of your app using user signals.
