@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to flask_mab's documentation!
+Intro
 =====================================
 
 Flask-MAB is an implementation of multi-armed bandit test pattern as a flask middleware.
@@ -48,7 +48,7 @@ Common examples of good use cases for Bandits include
 Any problem you can model in your app logic can be optimized using the bandit algorithm.  How you apply it is up to you!
 
 .. toctree::
-   :maxdepth: 6 
+   :maxdepth: 4 
    
    getting_started
    flask_mab

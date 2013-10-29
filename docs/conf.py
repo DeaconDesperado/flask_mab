@@ -43,7 +43,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'flask_mab'
+project = u'Flask-MAB'
 copyright = u'2013, Mark Grey'
 
 # The version info for the project you're documenting, acts as replacement for

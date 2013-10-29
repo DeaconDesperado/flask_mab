@@ -4,7 +4,8 @@
 
     This module implements all the extension logic for Multi-armed bandit experiments on Flask apps.
 
-    :copyright: (c) 2013 by Mark Grey. 
+    :copyright: (c) 2013 by `Mark Grey <http://www.deacondesperado.com>`_.
+
     :license: BSD, see LICENSE for more details.
 """
 
@@ -99,7 +100,8 @@ class BanditMiddleware(object):
         def pull_decorated_arms():
             for func,bandit in self.pull_endpts:
                 if request.endpoint == func.__name__:
-                    self.suggest_arm_for(bandit,True)
+                    arm_tuple = self.suggest_arm_for(bandit,True)
+                    setattr(func,bandit,arm_tuple[1])
 
         @self.app.before_request
         def detect_last_bandits():

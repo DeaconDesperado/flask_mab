@@ -42,7 +42,10 @@ class Bandit(object):
             self.reward[ind] += reward
 
     def suggest_arm(self):
-        """Uniform random for default bandit"""
+        """Uniform random for default bandit.
+        
+        Just uses random.choice to choose between arms
+        """
         return self[random.choice(self.arms)]
 
     def __getitem__(self,key):
@@ -72,18 +75,18 @@ class EpsilonGreedyBandit(Bandit):
     Will "exploit" the present winner more often with lower values of epsilon, "explore"
     other candidates more often with higher values of epsilon.
 
+    :param epsilon: The percentage of the time to "explore" other arms, E.G a value of 
+                    0.1 will perform random assignment for %10 of traffic
+    :type epsilon: float
     """
     
     def __init__(self,epsilon=0.1):
-        """Initliaze an experiment with an epsilon greedy bandit
-
-        :param epsilon: The percentage of the time to "explore" other arms
-        :type epsilon: float
-        """
         super(EpsilonGreedyBandit,self).__init__()
         self.epsilon = epsilon
 
     def suggest_arm(self):
+        """Get an arm according to the EpsilonGreedy Strategy
+        """
         random_determination = random()
         if random_determination > self.epsilon:
             key = self._ind_max()
@@ -140,6 +143,8 @@ class NaiveStochasticBandit(Bandit):
         return weights
 
     def suggest_arm(self):
+        """Get an arm according to the Naive Stochastic Strategy
+        """
         weights = self._compute_weights()
         random_determination = uniform(min(weights),max(weights))
         
