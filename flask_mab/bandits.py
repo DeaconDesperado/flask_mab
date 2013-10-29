@@ -1,4 +1,4 @@
-from random import random,choice
+from random import random,choice,uniform
 
 class Bandit(object):
 
@@ -95,5 +95,28 @@ class EpsilonGreedyBandit(Bandit):
         return Bandit.__str__(self)
 
 class NaiveStochasticBandit(Bandit):
-    pass
+
+    def __init__(self):
+        super(NaiveStochasticBandit,self).__init__()
+
+    def _compute_weights(self):
+        weights = []
+        for ind,n in enumerate(self.pulls):
+            reward = self.reward[ind]
+            try:
+                weights.append(float(reward)/float(n))
+            except ZeroDivisionError:
+                weights.append(1.0/len(self.arms))
+        return weights
+
+    def suggest_arm(self):
+        weights = self._compute_weights()
+        random_determination = uniform(min(weights),max(weights))
+        
+        cum_weight = 0.0
+        for ind,weight in enumerate(weights):
+            cum_weight += weight
+            if random_determination <= cum_weight:
+                return self[self.arms[ind]]
+        return self[self.arms[0]]
 

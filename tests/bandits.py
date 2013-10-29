@@ -18,7 +18,7 @@ class EpsilonBanditTest(unittest.TestCase):
             self.bandit.reward_arm("green",1)
         assert self.bandit["green"]["reward"] > 0
 
-    def test_epsilon_strategy(self):
+    def test_strategy(self):
         sums = Counter(["red","blue","green"])
         for i in xrange(50000):
             arm = self.bandit.suggest_arm()
@@ -31,8 +31,15 @@ class EpsilonBanditTest(unittest.TestCase):
             if i % 30 is 0:
                 self.bandit.reward_arm("green",1)
 
+        #allow ten percent variance for randomization
         assert (sums["red"]+sums["green"]),  sums["blue"] * 0.60
 
-    
+class NaiveStochasticBanditTest(EpsilonBanditTest):
+
+    def setUp(self):
+        self.bandit = makeBandit("NaiveStochasticBandit")
+
+
+
 if __name__ == '__main__':
     unittest.main()
