@@ -32,8 +32,8 @@ John Myles White has an awesome treatise on Bandit implementations in his book `
 How does it work? 
 -----------------
 
-Flask-MAB can be configured with several different bandit strategies for anything you'd like to test. You
-can define your tests using the :mod:`flask_mab.bandits` classes.  The different states you'd like to test for are
+Flask-MAB can be configured with several different bandit strategies for anything you'd like to test for maximizing user interaction. 
+You can define your tests using the :mod:`flask_mab.bandits` classes.  The different states you'd like to test for are
 represented as the "arms" on the bandit.  You can define endpoints that will assign "arms" to users as well as ones that
 will register how much "reward" the arm has paid.  The Bandit strategy you select will use these two scalars to adjust its
 strategy for assigning arms to new users.  These values are persisted to the client so users can keep a consistent
@@ -45,10 +45,15 @@ Common examples of good use cases for Bandits include
 * Optimizing UI elements for best user experience, such as button colors or navigation placement
 * Changing ad copy wording or help text to see if it increases click throughput
 
-.. toctree::
-   :maxdepth: 4
+Any problem you can model in your app logic can be optimized using the bandit algorithm.  How you apply it is up to you!
 
+.. toctree::
+   :maxdepth: 6 
+   
+   getting_started
    flask_mab
+   bandits
+   storage
 
 
 Indices and tables

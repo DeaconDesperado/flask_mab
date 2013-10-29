@@ -38,6 +38,7 @@ class BanditMiddleware(object):
         :param app: A Flask application
         :param storage: A storage engine instance from the storage module
         """
+        #TODO: use flask app config for cookie vals
         self.app = app
         if app is not None:
             self.init_app(app)

@@ -1,6 +1,8 @@
 import json
 import bandits
 
+#TODO: RollingFileStorage, MongoStorage, RollingMongoStorage, ZODBStorage, RollingZODBStorage
+
 class BanditEncoder(json.JSONEncoder):
     def default(self,obj):
         if isinstance(obj,bandits.Bandit):
