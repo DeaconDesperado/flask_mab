@@ -14,6 +14,8 @@
 import sys, os
 sys.path.append("../")
 
+sys.path.append(os.path.abspath('_themes'))
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -284,3 +286,6 @@ epub_copyright = u'2013, Author'
 
 # Allow duplicate toc entries.
 #epub_tocdup = True
+
+html_theme_path = ['_themes']
+html_theme = 'flask'
