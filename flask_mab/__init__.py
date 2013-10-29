@@ -28,6 +28,12 @@ def after_this_request(f):
     g.after_request_callbacks.append(f)
     return f
 
+def get_cookie_json(request,cookie_name):
+    try:
+        return json.loads(request.cookies.get(cookie_name,''))
+    except ValueError:
+        return False
+
 class BanditMiddleware(object):
     """The main flask extension.
     Sets up all the necessary tracking for the bandit experiments
@@ -44,7 +50,6 @@ class BanditMiddleware(object):
         if app is not None:
             self.init_app(app)
         self.bandits = {} 
-        self.cookie_arms = None
         self.reward_endpts = []
         self.pull_endpts = []
         if not storage or not isinstance(storage,BanditStorage):
@@ -107,7 +112,7 @@ class BanditMiddleware(object):
         def detect_last_bandits():
             bandits = request.cookies.get(self.cookie_name)
             if bandits:
-                self.cookie_arms = json.loads(bandits)
+                request.cookie_arms = json.loads(bandits)
 
         @self.app.after_request
         def persist_bandits(response):
@@ -120,25 +125,26 @@ class BanditMiddleware(object):
                 callback(response)
             return response
 
+        @self.app.after_request
+        def remember_bandit_arms(response):
+            if hasattr(g,'arm_pulls_to_register'):
+                response.set_cookie(self.cookie_name,json.dumps(g.arm_pulls_to_register))
+            return response
+        
         @self.app.before_request
         def after_callbacks():
             @after_this_request
             def run_reward_decorators(response):
                 for func,bandit,reward in self.reward_endpts:
                     if request.endpoint == func.__name__:
-                        self.reward(bandit,self.cookie_arms[bandit],1.0)
+                        self.reward(bandit,request.cookie_arms[bandit],1.0)
                 return response
 
-            @after_this_request
-            def remember_bandit_arms(response):
-                if hasattr(g,'arm_pulls_to_register'):
-                    response.set_cookie(self.cookie_name,json.dumps(g.arm_pulls_to_register))
-                return response
 
             @after_this_request
             def send_debug_header(response):
-                if self.debug_headers and self.cookie_arms:
-                    response.headers['MAB-Debug'] = "SAVED; "+';'.join(['%s:%s' % (key,val) for key,val in self.cookie_arms.items()])
+                if self.debug_headers and get_cookie_json(request,self.cookie_name): 
+                    response.headers['MAB-Debug'] = "SAVED; "+';'.join(['%s:%s' % (key,val) for key,val in request.cookie_arms.items()])
                 elif self.debug_headers and hasattr(g,'arm_pulls_to_register'):
                     response.headers['MAB-Debug'] = "STORE; "+';'.join(['%s:%s' % (key,val) for key,val in g.arm_pulls_to_register.items()])
                 return response
@@ -190,6 +196,7 @@ class BanditMiddleware(object):
         """
         if not hasattr(g,'arm_pulls_to_register'):
             g.arm_pulls_to_register = {}
+        print 'persist'
         g.arm_pulls_to_register[bandit_id] = arm_id
 
     def __getitem__(self,key):
@@ -210,17 +217,19 @@ class BanditMiddleware(object):
         :raises KeyError: in case requested experiment does not exist
         """
         try:
-            arm = self.bandits[key][self.cookie_arms[key]]
+            cookie_arms = get_cookie_json(request,self.cookie_name) 
+            arm = self.bandits[key][cookie_arms[key]]
             if also_pull:
                 self.pull(key,arm["id"])
             return arm["id"],arm["value"]
-        except (AttributeError,TypeError):
+        except (AttributeError,TypeError,ValueError), e:
             arm = self.bandits[key].suggest_arm()
             if also_pull:
                 self.pull(key,arm["id"])
             self._register_persist_arm(key,arm["id"])
             return arm["id"],arm["value"]
         except KeyError,e:
+            print e
             raise KeyError("No experiment defined for bandit key: %s" % key)
 
     def reward_endpt(self,bandit,reward=1):
