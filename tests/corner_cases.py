@@ -10,6 +10,7 @@ import json
 
 class MABCornerCases(unittest.TestCase):
 
+
     def test_no_storage(self):
         app = flask.Flask('test_app')
         with self.assertRaises(MABConfigException):
