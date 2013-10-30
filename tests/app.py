@@ -111,6 +111,8 @@ class MABTestCase(unittest.TestCase):
         bandit arms
         """
 
+        self.mab.storage.flush()
+
         def request_worker(test,iden,q):
             try:
                 client = test.app.test_client()
