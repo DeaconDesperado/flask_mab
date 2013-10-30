@@ -288,4 +288,10 @@ epub_copyright = u'2013, Author'
 #epub_tocdup = True
 
 html_theme_path = ['_themes']
-html_theme = 'flask'
+html_theme = 'flask_small'
+
+html_theme_options = {
+    'index_logo': 'flask_mab.png',
+    'index_logo_height': "200px",
+    'github_fork': 'deacondesperado/flask_mab',
+}
