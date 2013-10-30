@@ -107,6 +107,9 @@ class MABTestCase(unittest.TestCase):
             assert req.headers['MAB-Debug'].split(';')[0].strip() == 'SAVED'
 
     def test_concurrency(self):
+        """Test that concurrent clients do not get confused 
+        bandit arms
+        """
 
         def request_worker(test,iden,q):
             try:
