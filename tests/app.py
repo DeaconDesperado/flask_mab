@@ -12,6 +12,7 @@ from test_utils import makeBandit
 from threading import Thread
 from multiprocessing import Pool
 from copy import copy
+from Queue import Queue
 
 class MABTestCase(unittest.TestCase):
 
@@ -106,29 +107,36 @@ class MABTestCase(unittest.TestCase):
             assert req.headers['MAB-Debug'].split(';')[0].strip() == 'SAVED'
 
     def test_concurrency(self):
-        def request_the_shit_out_of_it(test,iden):
-            client = test.app.test_client()
-            first_req = client.get("/show_btn")
-            chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
-            assert first_req.headers['MAB-Debug'].split(';')[0].strip() == 'STORE'
-            for i in xrange(400):
-                req = client.get("/show_btn")
-                #TODO: refactor this to regex
-                assert req.headers['MAB-Debug'].split(';')[1].split(':')[1] == chosen_arm
-                assert req.headers['MAB-Debug'].split(';')[0].strip() == 'SAVED'
-            client.cookie_jar.clear()
-            final_req = client.get("/show_btn")
-            assert final_req.headers['MAB-Debug'].split(';')[0].strip() == 'STORE'
 
+        def request_worker(test,iden,q):
+            try:
+                client = test.app.test_client()
+                first_req = client.get("/show_btn")
+                chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
+                assert first_req.headers['MAB-Debug'].split(';')[0].strip() == 'STORE'
+                for i in xrange(400):
+                    req = client.get("/show_btn")
+                    #TODO: refactor this to regex
+                    assert req.headers['MAB-Debug'].split(';')[1].split(':')[1] == chosen_arm
+                    assert req.headers['MAB-Debug'].split(';')[0].strip() == 'SAVED'
+                client.cookie_jar.clear()
+                final_req = client.get("/show_btn")
+                assert final_req.headers['MAB-Debug'].split(';')[0].strip() == 'STORE'
+                q.put(True)
+            except AssertionError,e:
+                q.put(e)
 
-        test_thread_1 = Thread(target=request_the_shit_out_of_it, args=(self,'A'))
-        test_thread_2 = Thread(target=request_the_shit_out_of_it, args=(self,'B'))
-        test_thread_1.start()
-        test_thread_2.start()
-        test_thread_1.join()
-        test_thread_2.join()
+        jobs = []
+        q = Queue()
+        for i in xrange(4):
+            jobs.append(Thread(target=request_worker, args=(self,i,q)))
 
-
+        map(lambda x: x.start(), jobs)
+        map(lambda x: x.join(), jobs)
+        while not q.empty():
+            val = q.get()
+            if isinstance(val,AssertionError):
+                raise val
 
 if __name__ == '__main__':
     unittest.main()
