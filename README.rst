@@ -1,7 +1,7 @@
 Flask-MAB
 =========
 
-.. image:: https://travis-ci.org/DeaconDesperado/flask_mab.png?branch=master   :target: https://travis-ci.org/DeaconDesperado/flask_mab
+.. image:: https://travis-ci.org/DeaconDesperado/flask_mab.png?branch=v0.9.2   :target: https://travis-ci.org/DeaconDesperado/flask_mab
 
 Flask-MAB is an implementation of multi-armed bandit test pattern as a flask middleware.
 
