@@ -9,7 +9,7 @@ It can be used to test the effectiveness of virtually any parts of your app usin
 
 If you can pass it, we can test it!
 
-`Complete Documentation <http://python-hosted.org/Flask-MAB/>`_.
+`Complete Documentation <http://pythonhosted.org/Flask-MAB/>`_.
 
 Multi-armed what?!
 ------------------
