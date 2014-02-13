@@ -41,3 +41,4 @@ class JSONBanditStorage(BanditStorage):
             return json.loads(bandits,cls=BanditDecoder)
         except (ValueError,IOError):
             return {}
+

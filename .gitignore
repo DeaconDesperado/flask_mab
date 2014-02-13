@@ -1,1 +1,6 @@
 *.pyc
+bandits.json
+build
+dist
+env
+*.egg-info
