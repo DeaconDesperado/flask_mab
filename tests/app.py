@@ -19,7 +19,8 @@ class MABTestCase(unittest.TestCase):
     def setUp(self):
         banditStorage = flask_mab.storage.JSONBanditStorage('./bandits.json')
         app = flask.Flask('test_app')
-        mab = flask_mab.BanditMiddleware(app,banditStorage)
+        mab = flask_mab.BanditMiddleware(app)
+        mab.register_storage(banditStorage)
         mab.add_bandit('color_button', makeBandit("EpsilonGreedyBandit",epsilon=0.1))
         app.debug = True
 
@@ -61,7 +62,7 @@ class MABTestCase(unittest.TestCase):
         self.mab.debug_headers = True
         rv = self.app_client.get("/show_btn")
         assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
-        assert "MAB-Debug" in rv.headers.keys()
+        assert "X-MAB-Debug" in rv.headers.keys()
         chosen_arm = self.get_arm(rv.headers)["color_button"]
         assert self.mab["color_button"][chosen_arm]["pulls"] > 0
         assert json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["color_button"] == chosen_arm
@@ -70,41 +71,41 @@ class MABTestCase(unittest.TestCase):
         self.mab.debug_headers = True
         rv = self.app_client.get("/show_btn_decorated")
         assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
-        assert "MAB-Debug" in rv.headers.keys()
+        assert "X-MAB-Debug" in rv.headers.keys()
         chosen_arm = self.get_arm(rv.headers)["color_button"]
         assert self.mab["color_button"][chosen_arm]["pulls"] > 0
         assert json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["color_button"] == chosen_arm
 
     def test_from_cookie(self):
         first_req = self.app_client.get("/show_btn")
-        assert "MAB-Debug" in first_req.headers.keys()
+        assert "X-MAB-Debug" in first_req.headers.keys()
         chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
         self.app_client.get("/reward")
         assert self.mab["color_button"][chosen_arm]["reward"] > 0
 
     def test_from_cookie_reward_decorated(self):
         first_req = self.app_client.get("/show_btn")
-        assert "MAB-Debug" in first_req.headers.keys()
+        assert "X-MAB-Debug" in first_req.headers.keys()
         chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
         self.app_client.get("/reward_decorated")
         assert self.mab["color_button"][chosen_arm]["reward"] > 0
 
     def get_arm(self,headers):
-        key_vals = [h.strip() for h in headers["MAB-Debug"].split(';')[1:]]
+        key_vals = [h.strip() for h in headers["X-MAB-Debug"].split(';')[1:]]
         return dict([tuple(tup.split(":")) for tup in key_vals])
 
     def test_new_session(self):
         first_req = self.app_client.get("/show_btn")
-        assert first_req.headers['MAB-Debug'].split(';')[0].strip() == 'STORE'
+        assert first_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
         self.app_client.cookie_jar.clear()
         second_req = self.app_client.get("/show_btn")
-        assert second_req.headers['MAB-Debug'].split(';')[0].strip() == 'STORE'
+        assert second_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
 
     def test_repeating_session(self):
         first_req = self.app_client.get("/show_btn")
         for i in xrange(30):
             req = self.app_client.get("/show_btn")
-            assert req.headers['MAB-Debug'].split(';')[0].strip() == 'SAVED'
+            assert req.headers['X-MAB-Debug'].split(';')[0].strip() == 'SAVED'
 
     def test_concurrency(self):
         """Test that concurrent clients do not get confused 
@@ -118,15 +119,15 @@ class MABTestCase(unittest.TestCase):
                 client = test.app.test_client()
                 first_req = client.get("/show_btn")
                 chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
-                assert first_req.headers['MAB-Debug'].split(';')[0].strip() == 'STORE'
+                assert first_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
                 for i in xrange(400):
                     req = client.get("/show_btn")
                     #TODO: refactor this to regex
-                    assert req.headers['MAB-Debug'].split(';')[1].split(':')[1] == chosen_arm
-                    assert req.headers['MAB-Debug'].split(';')[0].strip() == 'SAVED'
+                    assert req.headers['X-MAB-Debug'].split(';')[1].split(':')[1] == chosen_arm
+                    assert req.headers['X-MAB-Debug'].split(';')[0].strip() == 'SAVED'
                 client.cookie_jar.clear()
                 final_req = client.get("/show_btn")
-                assert final_req.headers['MAB-Debug'].split(';')[0].strip() == 'STORE'
+                assert final_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
                 q.put(True)
             except AssertionError,e:
                 q.put(e)

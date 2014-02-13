@@ -39,7 +39,7 @@ class BanditMiddleware(object):
     Sets up all the necessary tracking for the bandit experiments
     """
     
-    def __init__(self,app,storage):
+    def __init__(self,app=None):
         """Attach MAB logic to a Flask application
         
         :param app: A Flask application
@@ -52,6 +52,8 @@ class BanditMiddleware(object):
         self.bandits = {} 
         self.reward_endpts = []
         self.pull_endpts = []
+
+    def register_storage(self,storage):
         if not storage or not isinstance(storage,BanditStorage):
             raise MABConfigException("Must pass a storage engine to persist bandit vals")
         else:
@@ -145,9 +147,9 @@ class BanditMiddleware(object):
             @after_this_request
             def send_debug_header(response):
                 if self.debug_headers and get_cookie_json(request,self.cookie_name): 
-                    response.headers['MAB-Debug'] = "SAVED; "+';'.join(['%s:%s' % (key,val) for key,val in request.cookie_arms.items()])
+                    response.headers['X-MAB-Debug'] = "SAVED; "+';'.join(['%s:%s' % (key,val) for key,val in request.cookie_arms.items()])
                 elif self.debug_headers and hasattr(g,'arm_pulls_to_register'):
-                    response.headers['MAB-Debug'] = "STORE; "+';'.join(['%s:%s' % (key,val) for key,val in g.arm_pulls_to_register.items()])
+                    response.headers['X-MAB-Debug'] = "STORE; "+';'.join(['%s:%s' % (key,val) for key,val in g.arm_pulls_to_register.items()])
                 return response
 
     def add_bandit(self,name,bandit=None):
