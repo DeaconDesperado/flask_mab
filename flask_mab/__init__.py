@@ -77,6 +77,7 @@ class BanditMiddleware(object):
         #TODO: change this to be config based
         self.debug_headers = app.config.get('MAB_DEBUG_HEADERS')
         self.cookie_name = app.config.get('MAB_COOKIE_NAME')
+        self.app = app
         self._init_detection()
 
     def teardown(self,*args,**kwargs):
