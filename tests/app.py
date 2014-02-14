@@ -2,7 +2,7 @@ import unittest
 import os
 import flask
 
-from flask_mab import BanditMiddleware,suggest_arm_for,reward
+from flask_mab import BanditMiddleware,add_bandit,suggest_arm_for,reward
 import flask_mab.storage
 from flask_mab.bandits import EpsilonGreedyBandit
 
@@ -20,7 +20,7 @@ class MABTestCase(unittest.TestCase):
         banditStorage = flask_mab.storage.JSONBanditStorage('./bandits.json')
         app = flask.Flask('test_app')
         flask_mab.BanditMiddleware(app)
-        app.bandits['color_button'] = makeBandit("EpsilonGreedyBandit",epsilon=0.1)
+        app.add_bandit('color_button',makeBandit("EpsilonGreedyBandit",epsilon=0.1))
         app.debug = True
 
         @app.route("/")

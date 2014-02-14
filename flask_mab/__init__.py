@@ -182,6 +182,7 @@ class BanditMiddleware(object):
 
         app.choose_arm = types.MethodType(choose_arm, app)
         app.reward_endpt = types.MethodType(reward_endpt, app)
+        app.add_bandit = types.MethodType(add_bandit, app)
 
 def _register_persist_arm(bandit_id,arm_id):
     """Puts suggestions on the stack to be saved to a cookie
@@ -191,8 +192,9 @@ def _register_persist_arm(bandit_id,arm_id):
         g.arm_pulls_to_register = {}
     g.arm_pulls_to_register[bandit_id] = arm_id
 
+#Public methods for operations on the app's bandit properties below
 
-def add_bandit(name,bandit=None):
+def add_bandit(app,name,bandit=None):
     """Attach a bandit for an experiment
     
     :param name: The name of the experiment, will be used for lookups
@@ -263,8 +265,5 @@ def suggest_arm_for(key,also_pull=False):
         return arm["id"],arm["value"]
     except KeyError,e:
         raise KeyError("No experiment defined for bandit key: %s" % key)
-
-
-
 
 class MABConfigException(Exception):pass

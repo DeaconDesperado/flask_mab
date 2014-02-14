@@ -33,7 +33,6 @@ class MABTestCase(unittest.TestCase):
 
         return mab 
 
-
     def setUp(self):
         app = flask.Flask(choice(['test_app', 'some_other_app']))
         mab = self.banditFactory(app) 
@@ -69,60 +68,6 @@ class MABTestCase(unittest.TestCase):
         self.app = app
         self.mab = mab
         self.app_client = app.test_client()
-
-    def test_routing(self):
-        rv = self.app_client.get("/")
-        assert "Hello" in rv.data
-
-    def test_suggest(self):
-        self.mab.debug_headers = True
-        rv = self.app_client.get("/show_btn")
-        assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
-        assert "X-MAB-Debug" in rv.headers.keys()
-        chosen_arm = self.get_arm(rv.headers)["color_button"]
-        assert self.mab["color_button"][chosen_arm]["pulls"] > 0
-        assert json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["color_button"] == chosen_arm
-
-    def test_suggest_decorated(self):
-        self.mab.debug_headers = True
-        rv = self.app_client.get("/show_btn_decorated")
-        assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
-        assert "X-MAB-Debug" in rv.headers.keys()
-        chosen_arm = self.get_arm(rv.headers)["color_button"]
-        assert self.mab["color_button"][chosen_arm]["pulls"] > 0
-        assert json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["color_button"] == chosen_arm
-
-    def test_from_cookie(self):
-        first_req = self.app_client.get("/show_btn")
-        assert "X-MAB-Debug" in first_req.headers.keys()
-        chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
-        self.app_client.get("/reward")
-        assert self.mab["color_button"][chosen_arm]["reward"] > 0
-
-    def test_from_cookie_reward_decorated(self):
-        first_req = self.app_client.get("/show_btn")
-        assert "X-MAB-Debug" in first_req.headers.keys()
-        chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
-        self.app_client.get("/reward_decorated")
-        assert self.mab["color_button"][chosen_arm]["reward"] > 0
-
-    def get_arm(self,headers):
-        key_vals = [h.strip() for h in headers["X-MAB-Debug"].split(';')[1:]]
-        return dict([tuple(tup.split(":")) for tup in key_vals])
-
-    def test_new_session(self):
-        first_req = self.app_client.get("/show_btn")
-        assert first_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
-        self.app_client.cookie_jar.clear()
-        second_req = self.app_client.get("/show_btn")
-        assert second_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
-
-    def test_repeating_session(self):
-        first_req = self.app_client.get("/show_btn")
-        for i in xrange(30):
-            req = self.app_client.get("/show_btn")
-            assert req.headers['X-MAB-Debug'].split(';')[0].strip() == 'SAVED'
-
 
 if __name__ == '__main__':
     unittest.main()
