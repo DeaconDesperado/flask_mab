@@ -12,7 +12,8 @@
 from flask import current_app,g,request
 import json
 from bandits import *
-from storage import BanditStorage
+import storage
+import types
 
 try:
     from flask import _app_ctx_stack as stack
@@ -34,6 +35,32 @@ def get_cookie_json(request,cookie_name):
     except ValueError:
         return False
 
+def choose_arm(app,bandit):
+    """Route decorator for registering an impression conveinently
+
+    :param bandit: The bandit/experiment to register for
+    :type bandit: string
+    """
+    def decorator(f):
+        app.pull_endpts.append((f,bandit)) 
+        return f
+    return decorator
+
+def reward_endpt(app, bandit,reward=1):
+    """Route decorator for rewards.
+
+    :param bandit: The bandit/experiment to register rewards 
+                   for using arm found in cookie.
+    :type bandit: string
+    :param reward: The amount of reward this endpoint should
+                   give its winning arm
+    :type reward: float
+    """
+    def decorator(f):
+        app.reward_endpts.append((f,bandit,reward)) 
+        return f
+    return decorator
+
 class BanditMiddleware(object):
     """The main flask extension.
     Sets up all the necessary tracking for the bandit experiments
@@ -46,18 +73,14 @@ class BanditMiddleware(object):
         :param storage: A storage engine instance from the storage module
         """
         #TODO: use flask app config for cookie vals
-        self.app = app
         if app is not None:
             self.init_app(app)
-        self.bandits = {} 
-        self.reward_endpts = []
-        self.pull_endpts = []
 
-    def register_storage(self,storage):
-        if not storage or not isinstance(storage,BanditStorage):
-            raise MABConfigException("Must pass a storage engine to persist bandit vals")
-        else:
-            self.storage = storage
+    def _register_storage(self,app):
+        storage_engine = getattr(storage, app.config.get('MAB_STORAGE_ENGINE','JSONBanditStorage')) 
+        storage_opts = app.config.get('MAB_STORAGE_OPTS',("./bandits.json",))
+        storage_backend = storage_engine(*storage_opts)
+        app.bandit_storage = storage_backend
 
     def init_app(self,app):
         """Attach Multi Armed Bandit to application and configure
@@ -69,23 +92,27 @@ class BanditMiddleware(object):
         app.config.setdefault('MAB_COOKIE_PATH','/')
         app.config.setdefault('MAB_COOKIE_TTL',None)
         app.config.setdefault('MAB_DEBUG_HEADERS',True)
+        self._register_storage(app)
         if hasattr(app, 'teardown_appcontext'):
             app.teardown_appcontext(self.teardown)
         else:
             app.teardown_request(self.teardown)
+
+        app.bandits = {} 
+        app.reward_endpts = []
+        app.pull_endpts = []
         
         #TODO: change this to be config based
-        self.debug_headers = app.config.get('MAB_DEBUG_HEADERS')
+        app.debug_headers = app.config.get('MAB_DEBUG_HEADERS')
         self.cookie_name = app.config.get('MAB_COOKIE_NAME')
-        self.app = app
-        self._init_detection()
+        self._init_detection(app)
 
     def teardown(self,*args,**kwargs):
         """Stub for old flask versions
         """
         pass
 
-    def _init_detection(self):
+    def _init_detection(self,app):
         """
         Attaches all request before/after handlers for bandits.
 
@@ -104,161 +131,140 @@ class BanditMiddleware(object):
         * remember_bandit_arms: Sets the cookie for all requests that pulled an arm
         * send_debug_header: Attaches a header for the MAB to the HTTP response for easier debugging
         """
-        @self.app.before_request
+        @app.before_request
         def pull_decorated_arms():
-            for func,bandit in self.pull_endpts:
+            for func,bandit in app.pull_endpts:
                 if request.endpoint == func.__name__:
-                    arm_tuple = self.suggest_arm_for(bandit,True)
+                    arm_tuple = suggest_arm_for(bandit,True)
                     setattr(func,bandit,arm_tuple[1])
 
-        @self.app.before_request
+        @app.before_request
         def detect_last_bandits():
             #TODO: figure out a way to generalize this request assignment at all stages
             bandits = request.cookies.get(self.cookie_name)
             if bandits:
                 request.cookie_arms = json.loads(bandits)
 
-        @self.app.after_request
+        @app.after_request
         def persist_bandits(response):
-            self.storage.save(self.bandits)
+            app.bandit_storage.save(app.bandits)
             return response
 
-        @self.app.after_request
+        @app.after_request
         def call_after_request_callbacks(response):
             for callback in getattr(g, 'after_request_callbacks', ()):
                 callback(response)
             return response
 
-        @self.app.after_request
+        @app.after_request
         def remember_bandit_arms(response):
             if hasattr(g,'arm_pulls_to_register'):
                 response.set_cookie(self.cookie_name,json.dumps(g.arm_pulls_to_register))
             return response
         
-        @self.app.before_request
+        @app.before_request
         def after_callbacks():
             @after_this_request
             def run_reward_decorators(response):
-                for func,bandit,reward in self.reward_endpts:
+                for func,bandit,reward_amt in app.reward_endpts:
                     if request.endpoint == func.__name__:
-                        self.reward(bandit,request.cookie_arms[bandit],1.0)
+                        reward(bandit,request.cookie_arms[bandit],reward_amt)
                 return response
 
 
             @after_this_request
             def send_debug_header(response):
-                if self.debug_headers and get_cookie_json(request,self.cookie_name): 
+                if app.debug_headers and get_cookie_json(request,self.cookie_name): 
                     response.headers['X-MAB-Debug'] = "SAVED; "+';'.join(['%s:%s' % (key,val) for key,val in request.cookie_arms.items()])
-                elif self.debug_headers and hasattr(g,'arm_pulls_to_register'):
+                elif app.debug_headers and hasattr(g,'arm_pulls_to_register'):
                     response.headers['X-MAB-Debug'] = "STORE; "+';'.join(['%s:%s' % (key,val) for key,val in g.arm_pulls_to_register.items()])
                 return response
 
-    def add_bandit(self,name,bandit=None):
-        """Attach a bandit for an experiment
-        
-        :param name: The name of the experiment, will be used for lookups
-        :param bandit: The bandit to use for this experiment
-        :type bandit: Bandit
-        """
-        saved_bandits = self.storage.load()
-        if name in saved_bandits.keys():
-            self.bandits[name] = saved_bandits[name]
-        else:
-            self.bandits[name] = bandit 
+        app.choose_arm = types.MethodType(choose_arm, app)
+        app.reward_endpt = types.MethodType(reward_endpt, app)
 
-    def pull(self,bandit_id,arm):
-        """Register a pull (impression) for an arm
+def _register_persist_arm(bandit_id,arm_id):
+    """Puts suggestions on the stack to be saved to a cookie
+    after request
+    """
+    if not hasattr(g,'arm_pulls_to_register'):
+        g.arm_pulls_to_register = {}
+    g.arm_pulls_to_register[bandit_id] = arm_id
 
-        :param bandit: The bandit/experiment name
-        :type bandit: string
-        :param arm: The name of the arm
-        :type arm: string
-        """
-        try:
-            self.bandits[bandit_id].pull_arm(arm)
-        except KeyError:
-            #bandit does not exist
-            pass
 
-    def reward(self,bandit_id,arm,reward=1):
-        """Register an arbitrary "reward" on an arm
+def add_bandit(name,bandit=None):
+    """Attach a bandit for an experiment
+    
+    :param name: The name of the experiment, will be used for lookups
+    :param bandit: The bandit to use for this experiment
+    :type bandit: Bandit
+    """
+    saved_bandits = app.bandit_storage.load()
+    if name in saved_bandits.keys():
+        app.bandits[name] = saved_bandits[name]
+    else:
+        app.bandits[name] = bandit 
 
-        :param bandit_id: The bandit/experiment in question
-        :type bandit_id: string
-        :param arm: The arm to register reward for
-        :type arm: string
-        """
-        try:
-            self.bandits[bandit_id].reward_arm(arm,reward)
-        except KeyError:
-            #bandit does not exist
-            pass
+def pull(bandit_id,arm):
+    """Register a pull (impression) for an arm
 
-    def _register_persist_arm(self,bandit_id,arm_id):
-        """Puts suggestions on the stack to be saved to a cookie
-        after request
-        """
-        if not hasattr(g,'arm_pulls_to_register'):
-            g.arm_pulls_to_register = {}
-        g.arm_pulls_to_register[bandit_id] = arm_id
+    :param bandit: The bandit/experiment name
+    :type bandit: string
+    :param arm: The name of the arm
+    :type arm: string
+    """
+    app = current_app
+    try:
+        app.bandits[bandit_id].pull_arm(arm)
+    except KeyError:
+        #bandit does not exist
+        pass
 
-    def __getitem__(self,key):
-        """Get an bandit/experiment by key
-        """
-        return self.bandits[key]
+def reward(bandit_id,arm,reward=1):
+    """Register an arbitrary "reward" on an arm
 
-    def suggest_arm_for(self,key,also_pull=False):
-        """Get an experimental outcome by id.  The primary way the implementor interfaces with their
-        experiments.
+    :param bandit_id: The bandit/experiment in question
+    :type bandit_id: string
+    :param arm: The arm to register reward for
+    :type arm: string
+    """
+    app = current_app
+    try:
+        app.bandits[bandit_id].reward_arm(arm,reward)
+    except KeyError:
+        #bandit does not exist
+        pass
 
-        Suggests arms if not in cookie, using cookie val if present
 
-        :param key: The bandit/experiment to get a suggested arm for
-        :type key: string
-        :param also_pull: Should we register a pull/impression at the same time as suggesting
-        :type also_pull: bool
-        :raises KeyError: in case requested experiment does not exist
-        """
-        try:
-            cookie_arms = get_cookie_json(request,self.cookie_name) 
-            arm = self.bandits[key][cookie_arms[key]]
-            if also_pull:
-                self.pull(key,arm["id"])
-            return arm["id"],arm["value"]
-        except (AttributeError,TypeError,ValueError), e:
-            arm = self.bandits[key].suggest_arm()
-            if also_pull:
-                self.pull(key,arm["id"])
-            self._register_persist_arm(key,arm["id"])
-            return arm["id"],arm["value"]
-        except KeyError,e:
-            raise KeyError("No experiment defined for bandit key: %s" % key)
+def suggest_arm_for(key,also_pull=False):
+    """Get an experimental outcome by id.  The primary way the implementor interfaces with their
+    experiments.
 
-    def reward_endpt(self,bandit,reward=1):
-        """Route decorator for rewards.
+    Suggests arms if not in cookie, using cookie val if present
 
-        :param bandit: The bandit/experiment to register rewards 
-                       for using arm found in cookie.
-        :type bandit: string
-        :param reward: The amount of reward this endpoint should
-                       give its winning arm
-        :type reward: float
-        """
-        def decorator(f):
-            self.reward_endpts.append((f,bandit,reward)) 
-            return f
-        return decorator
+    :param key: The bandit/experiment to get a suggested arm for
+    :type key: string
+    :param also_pull: Should we register a pull/impression at the same time as suggesting
+    :type also_pull: bool
+    :raises KeyError: in case requested experiment does not exist
+    """
+    app = current_app
+    try:
+        cookie_arms = get_cookie_json(request,app.config.get("MAB_COOKIE_NAME")) 
+        arm = app.bandits[key][cookie_arms[key]]
+        if also_pull:
+            pull(key,arm["id"])
+        return arm["id"],arm["value"]
+    except (AttributeError,TypeError,ValueError), e:
+        arm = app.bandits[key].suggest_arm()
+        if also_pull:
+            pull(key,arm["id"])
+        _register_persist_arm(key,arm["id"])
+        return arm["id"],arm["value"]
+    except KeyError,e:
+        raise KeyError("No experiment defined for bandit key: %s" % key)
 
-    def choose_arm(self,bandit):
-        """Route decorator for registering an impression conveinently
 
-        :param bandit: The bandit/experiment to register for
-        :type bandit: string
-        """
-        def decorator(f):
-            self.pull_endpts.append((f,bandit)) 
-            return f
-        return decorator
 
 
 class MABConfigException(Exception):pass
