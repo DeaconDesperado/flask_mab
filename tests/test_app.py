@@ -50,6 +50,7 @@ class MABTestCase(unittest.TestCase):
             return flask.make_response("awarded the arm")
 
         self.app = app
+        self.app.config["MAB_DEBUG_HEADERS"] = True
         self.app_client = app.test_client()
 
     def test_routing(self):
@@ -57,7 +58,6 @@ class MABTestCase(unittest.TestCase):
         assert "Hello" in rv.data
 
     def test_suggest(self):
-        self.app.debug_headers = True
         rv = self.app_client.get("/show_btn")
         assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
         assert "X-MAB-Debug" in rv.headers.keys()
@@ -66,7 +66,6 @@ class MABTestCase(unittest.TestCase):
         assert json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["color_button"] == chosen_arm
 
     def test_suggest_decorated(self):
-        self.app.debug_headers = True
         rv = self.app_client.get("/show_btn_decorated")
         assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
         assert "X-MAB-Debug" in rv.headers.keys()

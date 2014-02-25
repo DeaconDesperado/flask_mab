@@ -76,7 +76,6 @@ class BanditMiddleware(object):
         :param app: A Flask application
         :param storage: A storage engine instance from the storage module
         """
-        #TODO: use flask app config for cookie vals
         if app is not None:
             self.init_app(app)
 
@@ -109,9 +108,8 @@ class BanditMiddleware(object):
         app.extensions['mab'].reward_endpts = []
         app.extensions['mab'].pull_endpts = []
         
-        #TODO: change this to be config based
-        app.extensions['mab'].debug_headers = app.config.get('MAB_DEBUG_HEADERS')
-        app.extensions['mab'].cookie_name = app.config.get('MAB_COOKIE_NAME')
+        app.extensions['mab'].debug_headers = app.config.get('MAB_DEBUG_HEADERS',True)
+        app.extensions['mab'].cookie_name = app.config.get('MAB_COOKIE_NAME',"MAB")
         self._init_detection(app)
 
     def teardown(self,*args,**kwargs):
@@ -144,14 +142,12 @@ class BanditMiddleware(object):
                 f = app.view_functions[request.endpoint]
                 for bandit in f.bandits:
                     arm_tuple = suggest_arm_for(bandit,True)
-                    print arm_tuple
                     setattr(f,bandit,arm_tuple[1])
             except (AttributeError, KeyError):
                 pass
 
         @app.before_request
         def detect_last_bandits():
-            #TODO: figure out a way to generalize this request assignment at all stages
             bandits = request.cookies.get(app.extensions['mab'].cookie_name)
             if bandits:
                 request.cookie_arms = json.loads(bandits)
@@ -277,4 +273,6 @@ def suggest_arm_for(key,also_pull=False):
     except KeyError,e:
         raise KeyError("No experiment defined for bandit key: %s" % key)
 
-class MABConfigException(Exception):pass
+class MABConfigException(Exception):
+    """Raised when internal state in MAB setup is invalid"""
+    pass
