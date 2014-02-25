@@ -14,6 +14,7 @@ import json
 import storage
 import types
 from bunch import Bunch
+from functools import wraps
 
 try:
     from flask import _app_ctx_stack as stack
@@ -136,6 +137,7 @@ class BanditMiddleware(object):
         """
         @app.before_request
         def pull_decorated_arms():
+            #TODO: Dont maintain a list of endts, sniff request view funcs
             for func,bandit in app.extensions['mab'].pull_endpts:
                 if request.endpoint == func.__name__:
                     arm_tuple = suggest_arm_for(bandit,True)
@@ -169,6 +171,7 @@ class BanditMiddleware(object):
         def after_callbacks():
             @after_this_request
             def run_reward_decorators(response):
+                #TODO: dont maintain a list, sniff matched request function
                 for func,bandit,reward_amt in app.extensions['mab'].reward_endpts:
                     if request.endpoint == func.__name__:
                         reward(bandit,request.cookie_arms[bandit],reward_amt)
@@ -182,7 +185,8 @@ class BanditMiddleware(object):
                 elif app.extensions['mab'].debug_headers and hasattr(g,'arm_pulls_to_register'):
                     response.headers['X-MAB-Debug'] = "STORE; "+';'.join(['%s:%s' % (key,val) for key,val in g.arm_pulls_to_register.items()])
                 return response
-
+        
+        #TODO: This will no longer be necessary if request sniffing works
         app.choose_arm = types.MethodType(choose_arm, app)
         app.reward_endpt = types.MethodType(reward_endpt, app)
         app.add_bandit = types.MethodType(add_bandit, app)

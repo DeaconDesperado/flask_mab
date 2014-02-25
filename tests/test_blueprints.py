@@ -16,10 +16,8 @@ class MABTestCase(unittest.TestCase):
 
     def setUp(self):
         banditStorage = flask_mab.storage.JSONBanditStorage('./bandits.json')
-        app = flask.Blueprint('test_bp',__name__)
-        #Cant do the below, need to use technique linked above
-        #flask_mab.BanditMiddleware(app)
-        #app.add_bandit('color_button',makeBandit("EpsilonGreedyBandit",epsilon=0.1))
+        bp = flask.Blueprint('test_bp',__name__)
+        mab = BanditMiddleware()
 
     def test_request(self):
-        pass
+        print "hello"
