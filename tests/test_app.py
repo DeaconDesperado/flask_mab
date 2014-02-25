@@ -2,7 +2,7 @@ import unittest
 import os
 import flask
 
-from flask_mab import BanditMiddleware,add_bandit,suggest_arm_for,reward
+from flask_mab import BanditMiddleware,add_bandit,suggest_arm_for,reward,choose_arm,reward_endpt
 import flask_mab.storage
 from flask_mab.bandits import EpsilonGreedyBandit
 
@@ -33,7 +33,7 @@ class MABTestCase(unittest.TestCase):
             return flask.make_response("arm")
 
         @app.route("/show_btn_decorated")
-        @app.choose_arm("color_button")
+        @choose_arm("color_button")
         def assign_arm_decorated():
             return flask.make_response("assigned an arm")
         
@@ -44,7 +44,7 @@ class MABTestCase(unittest.TestCase):
             return flask.make_response("awarded the arm")
 
         @app.route("/reward_decorated")
-        @app.reward_endpt("color_button",1.0)
+        @reward_endpt("color_button",1.0)
         def reward_decorated():
             assigned_arm = suggest_arm_for("color_button")
             return flask.make_response("awarded the arm")
