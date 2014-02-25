@@ -14,6 +14,7 @@ import json
 from bandits import *
 import storage
 import types
+from bunch import Bunch
 
 try:
     from flask import _app_ctx_stack as stack
@@ -42,7 +43,7 @@ def choose_arm(app,bandit):
     :type bandit: string
     """
     def decorator(f):
-        app.pull_endpts.append((f,bandit)) 
+        app.extensions['mab'].pull_endpts.append((f,bandit)) 
         return f
     return decorator
 
@@ -57,7 +58,7 @@ def reward_endpt(app, bandit,reward=1):
     :type reward: float
     """
     def decorator(f):
-        app.reward_endpts.append((f,bandit,reward)) 
+        app.extensions['mab'].reward_endpts.append((f,bandit,reward)) 
         return f
     return decorator
 
@@ -92,19 +93,22 @@ class BanditMiddleware(object):
         app.config.setdefault('MAB_COOKIE_PATH','/')
         app.config.setdefault('MAB_COOKIE_TTL',None)
         app.config.setdefault('MAB_DEBUG_HEADERS',True)
+        if not hasattr(app, 'extensions'):
+            app.extensions = {}
+        app.extensions['mab'] = Bunch() 
         self._register_storage(app)
         if hasattr(app, 'teardown_appcontext'):
             app.teardown_appcontext(self.teardown)
         else:
             app.teardown_request(self.teardown)
 
-        app.bandits = {} 
-        app.reward_endpts = []
-        app.pull_endpts = []
+        app.extensions['mab'].bandits = {} 
+        app.extensions['mab'].reward_endpts = []
+        app.extensions['mab'].pull_endpts = []
         
         #TODO: change this to be config based
-        app.debug_headers = app.config.get('MAB_DEBUG_HEADERS')
-        self.cookie_name = app.config.get('MAB_COOKIE_NAME')
+        app.extensions['mab'].debug_headers = app.config.get('MAB_DEBUG_HEADERS')
+        app.extensions['mab'].mab_cookie_name = app.config.get('MAB_COOKIE_NAME')
         self._init_detection(app)
 
     def teardown(self,*args,**kwargs):
@@ -133,7 +137,7 @@ class BanditMiddleware(object):
         """
         @app.before_request
         def pull_decorated_arms():
-            for func,bandit in app.pull_endpts:
+            for func,bandit in app.extensions['mab'].pull_endpts:
                 if request.endpoint == func.__name__:
                     arm_tuple = suggest_arm_for(bandit,True)
                     setattr(func,bandit,arm_tuple[1])
@@ -141,13 +145,13 @@ class BanditMiddleware(object):
         @app.before_request
         def detect_last_bandits():
             #TODO: figure out a way to generalize this request assignment at all stages
-            bandits = request.cookies.get(self.cookie_name)
+            bandits = request.cookies.get(app.extensions['mab'].cookie_name)
             if bandits:
                 request.cookie_arms = json.loads(bandits)
 
         @app.after_request
         def persist_bandits(response):
-            app.bandit_storage.save(app.bandits)
+            app.bandit_storage.save(app.extensions['mab'].bandits)
             return response
 
         @app.after_request
@@ -159,14 +163,14 @@ class BanditMiddleware(object):
         @app.after_request
         def remember_bandit_arms(response):
             if hasattr(g,'arm_pulls_to_register'):
-                response.set_cookie(self.cookie_name,json.dumps(g.arm_pulls_to_register))
+                response.set_cookie(app.extensions['mab'].cookie_name,json.dumps(g.arm_pulls_to_register))
             return response
         
         @app.before_request
         def after_callbacks():
             @after_this_request
             def run_reward_decorators(response):
-                for func,bandit,reward_amt in app.reward_endpts:
+                for func,bandit,reward_amt in app.extensions['mab'].reward_endpts:
                     if request.endpoint == func.__name__:
                         reward(bandit,request.cookie_arms[bandit],reward_amt)
                 return response
@@ -174,9 +178,9 @@ class BanditMiddleware(object):
 
             @after_this_request
             def send_debug_header(response):
-                if app.debug_headers and get_cookie_json(request,self.cookie_name): 
+                if app.extensions['mab'].debug_headers and get_cookie_json(request,app.extensions['mab'].cookie_name): 
                     response.headers['X-MAB-Debug'] = "SAVED; "+';'.join(['%s:%s' % (key,val) for key,val in request.cookie_arms.items()])
-                elif app.debug_headers and hasattr(g,'arm_pulls_to_register'):
+                elif app.extensions['mab'].debug_headers and hasattr(g,'arm_pulls_to_register'):
                     response.headers['X-MAB-Debug'] = "STORE; "+';'.join(['%s:%s' % (key,val) for key,val in g.arm_pulls_to_register.items()])
                 return response
 
@@ -203,9 +207,9 @@ def add_bandit(app,name,bandit=None):
     """
     saved_bandits = app.bandit_storage.load()
     if name in saved_bandits.keys():
-        app.bandits[name] = saved_bandits[name]
+        app.extensions['mab'].bandits[name] = saved_bandits[name]
     else:
-        app.bandits[name] = bandit 
+        app.extensions['mab'].bandits[name] = bandit 
 
 def pull(bandit_id,arm):
     """Register a pull (impression) for an arm
@@ -217,7 +221,7 @@ def pull(bandit_id,arm):
     """
     app = current_app
     try:
-        app.bandits[bandit_id].pull_arm(arm)
+        app.extensions['mab'].bandits[bandit_id].pull_arm(arm)
     except KeyError:
         #bandit does not exist
         pass
@@ -232,7 +236,7 @@ def reward(bandit_id,arm,reward=1):
     """
     app = current_app
     try:
-        app.bandits[bandit_id].reward_arm(arm,reward)
+        app.extensions['mab'].bandits[bandit_id].reward_arm(arm,reward)
     except KeyError:
         #bandit does not exist
         pass
@@ -253,12 +257,12 @@ def suggest_arm_for(key,also_pull=False):
     app = current_app
     try:
         cookie_arms = get_cookie_json(request,app.config.get("MAB_COOKIE_NAME")) 
-        arm = app.bandits[key][cookie_arms[key]]
+        arm = app.extensions['mab'].bandits[key][cookie_arms[key]]
         if also_pull:
             pull(key,arm["id"])
         return arm["id"],arm["value"]
     except (AttributeError,TypeError,ValueError), e:
-        arm = app.bandits[key].suggest_arm()
+        arm = app.extensions['mab'].bandits[key].suggest_arm()
         if also_pull:
             pull(key,arm["id"])
         _register_persist_arm(key,arm["id"])

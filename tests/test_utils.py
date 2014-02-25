@@ -1,7 +1,7 @@
-import flask_mab.bandits
+import flask_mab.bandits as bandits
 
 def makeBandit(bandit_type,**kwargs):
-    bandit_cls = getattr(flask_mab.bandits, bandit_type)
+    bandit_cls = getattr(bandits, bandit_type)
     bandit = bandit_cls(**kwargs)
     bandit.add_arm("green","#00FF00")
     bandit.add_arm("red","#FF0000")
