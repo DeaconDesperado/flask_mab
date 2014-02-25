@@ -11,7 +11,6 @@
 
 from flask import current_app,g,request
 import json
-from bandits import *
 import storage
 import types
 from bunch import Bunch
@@ -108,7 +107,7 @@ class BanditMiddleware(object):
         
         #TODO: change this to be config based
         app.extensions['mab'].debug_headers = app.config.get('MAB_DEBUG_HEADERS')
-        app.extensions['mab'].mab_cookie_name = app.config.get('MAB_COOKIE_NAME')
+        app.extensions['mab'].cookie_name = app.config.get('MAB_COOKIE_NAME')
         self._init_detection(app)
 
     def teardown(self,*args,**kwargs):

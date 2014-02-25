@@ -62,7 +62,7 @@ class MABTestCase(unittest.TestCase):
         assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
         assert "X-MAB-Debug" in rv.headers.keys()
         chosen_arm = self.get_arm(rv.headers)["color_button"]
-        assert self.app.bandits["color_button"][chosen_arm]["pulls"] > 0
+        assert self.app.extensions['mab'].bandits["color_button"][chosen_arm]["pulls"] > 0
         assert json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["color_button"] == chosen_arm
 
     def test_suggest_decorated(self):
@@ -71,7 +71,7 @@ class MABTestCase(unittest.TestCase):
         assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
         assert "X-MAB-Debug" in rv.headers.keys()
         chosen_arm = self.get_arm(rv.headers)["color_button"]
-        assert self.app.bandits["color_button"][chosen_arm]["pulls"] > 0
+        assert self.app.extensions['mab'].bandits["color_button"][chosen_arm]["pulls"] > 0
         assert json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["color_button"] == chosen_arm
 
     def test_from_cookie(self):
@@ -79,14 +79,14 @@ class MABTestCase(unittest.TestCase):
         assert "X-MAB-Debug" in first_req.headers.keys()
         chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
         self.app_client.get("/reward")
-        assert self.app.bandits["color_button"][chosen_arm]["reward"] > 0
+        assert self.app.extensions['mab'].bandits["color_button"][chosen_arm]["reward"] > 0
 
     def test_from_cookie_reward_decorated(self):
         first_req = self.app_client.get("/show_btn")
         assert "X-MAB-Debug" in first_req.headers.keys()
         chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
         self.app_client.get("/reward_decorated")
-        assert self.app.bandits["color_button"][chosen_arm]["reward"] > 0
+        assert self.app.extensions['mab'].bandits["color_button"][chosen_arm]["reward"] > 0
 
     def get_arm(self,headers):
         key_vals = [h.strip() for h in headers["X-MAB-Debug"].split(';')[1:]]
