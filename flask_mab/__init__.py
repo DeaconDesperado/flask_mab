@@ -14,7 +14,6 @@ import json
 import storage
 import types
 from bunch import Bunch
-from functools import wraps
 
 try:
     from flask import _app_ctx_stack as stack
@@ -36,18 +35,20 @@ def get_cookie_json(request,cookie_name):
     except ValueError:
         return False
 
-def choose_arm(app,bandit):
+def choose_arm(bandit):
     """Route decorator for registering an impression conveinently
 
     :param bandit: The bandit/experiment to register for
     :type bandit: string
     """
     def decorator(f):
-        app.extensions['mab'].pull_endpts.append((f,bandit)) 
+        if not hasattr(f,'bandits'):
+            f.bandits = []
+        f.bandits.append(bandit)
         return f
     return decorator
 
-def reward_endpt(app, bandit,reward=1):
+def reward_endpt(bandit,reward=1):
     """Route decorator for rewards.
 
     :param bandit: The bandit/experiment to register rewards 
@@ -58,7 +59,9 @@ def reward_endpt(app, bandit,reward=1):
     :type reward: float
     """
     def decorator(f):
-        app.extensions['mab'].reward_endpts.append((f,bandit,reward)) 
+        if not hasattr(f, 'rewards'):
+            f.rewards = []
+        f.rewards.append((bandit, reward))
         return f
     return decorator
 
@@ -137,11 +140,14 @@ class BanditMiddleware(object):
         """
         @app.before_request
         def pull_decorated_arms():
-            #TODO: Dont maintain a list of endts, sniff request view funcs
-            for func,bandit in app.extensions['mab'].pull_endpts:
-                if request.endpoint == func.__name__:
+            try:
+                f = app.view_functions[request.endpoint]
+                for bandit in f.bandits:
                     arm_tuple = suggest_arm_for(bandit,True)
-                    setattr(func,bandit,arm_tuple[1])
+                    print arm_tuple
+                    setattr(f,bandit,arm_tuple[1])
+            except (AttributeError, KeyError):
+                pass
 
         @app.before_request
         def detect_last_bandits():
@@ -171,12 +177,13 @@ class BanditMiddleware(object):
         def after_callbacks():
             @after_this_request
             def run_reward_decorators(response):
-                #TODO: dont maintain a list, sniff matched request function
-                for func,bandit,reward_amt in app.extensions['mab'].reward_endpts:
-                    if request.endpoint == func.__name__:
-                        reward(bandit,request.cookie_arms[bandit],reward_amt)
-                return response
 
+                try:
+                    f = app.view_functions[request.endpoint]
+                    for bandit, reward_amt in f.rewards:
+                        reward(bandit,request.cookie_arms[bandit],reward_amt)
+                except (AttributeError, KeyError):
+                    pass
 
             @after_this_request
             def send_debug_header(response):
@@ -185,10 +192,7 @@ class BanditMiddleware(object):
                 elif app.extensions['mab'].debug_headers and hasattr(g,'arm_pulls_to_register'):
                     response.headers['X-MAB-Debug'] = "STORE; "+';'.join(['%s:%s' % (key,val) for key,val in g.arm_pulls_to_register.items()])
                 return response
-        
-        #TODO: This will no longer be necessary if request sniffing works
-        app.choose_arm = types.MethodType(choose_arm, app)
-        app.reward_endpt = types.MethodType(reward_endpt, app)
+
         app.add_bandit = types.MethodType(add_bandit, app)
 
 def _register_persist_arm(bandit_id,arm_id):
