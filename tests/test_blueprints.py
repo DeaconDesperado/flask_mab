@@ -2,7 +2,7 @@ import unittest
 import os
 import flask
 
-from flask_mab import BanditMiddleware,add_bandit,suggest_arm_for,reward,choose_arm,reward_endpt
+from flask_mab import BanditMiddleware,add_bandit,choose_arm,reward_endpt,MABConfigException
 import flask_mab.storage
 from flask_mab.bandits import EpsilonGreedyBandit
 
@@ -40,6 +40,8 @@ class MABTestCase(unittest.TestCase):
 
         rv = app_client.get("/")
         assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
+        print parse_cookie(rv.headers["Set-Cookie"])["MAB"]
+
         assert "X-MAB-Debug" in rv.headers.keys()
         chosen_arm = self.get_arm(rv.headers)["some_bandit"]
         assert app.extensions['mab'].bandits["some_bandit"][chosen_arm]["pulls"] > 0
@@ -47,6 +49,21 @@ class MABTestCase(unittest.TestCase):
 
         app_client.get("/reward")
         assert app.extensions['mab'].bandits["some_bandit"][chosen_arm]["reward"] > 0
+
+    def test_improper_configuration(self):
+        app = flask.Flask(__name__)
+        app.debug = True
+        BanditMiddleware().init_app(app)
+
+        app.register_blueprint(self.bp)
+        app_client = app.test_client()
+
+        with self.assertRaises(MABConfigException):
+            rv = app_client.get("/")
+
+        with self.assertRaises(MABConfigException):
+            app_client.set_cookie("localhost", "MAB", '{"some_bandit": "blue"}')
+            app_client.get("/reward")
 
     def get_arm(self,headers):
         key_vals = [h.strip() for h in headers["X-MAB-Debug"].split(';')[1:]]

@@ -143,7 +143,8 @@ class BanditMiddleware(object):
                 for bandit in f.bandits:
                     arm_tuple = suggest_arm_for(bandit,True)
                     setattr(f,bandit,arm_tuple[1])
-            except (AttributeError, KeyError):
+            except AttributeError:
+                #Endpoint is not a bandit endpoint, continue
                 pass
 
         @app.before_request
@@ -173,12 +174,12 @@ class BanditMiddleware(object):
         def after_callbacks():
             @after_this_request
             def run_reward_decorators(response):
-
                 try:
                     f = app.view_functions[request.endpoint]
                     for bandit, reward_amt in f.rewards:
                         reward(bandit,request.cookie_arms[bandit],reward_amt)
-                except (AttributeError, KeyError):
+                except AttributeError:
+                    #Endpoint is not a bandit endpoint, continue
                     pass
 
             @after_this_request
@@ -242,7 +243,7 @@ def reward(bandit_id,arm,reward=1):
         app.extensions['mab'].bandits[bandit_id].reward_arm(arm,reward)
     except KeyError:
         #bandit does not exist
-        pass
+        raise MABConfigException("No experiment defined for bandit key: %s" % bandit_id)
 
 
 def suggest_arm_for(key,also_pull=False):
@@ -271,7 +272,7 @@ def suggest_arm_for(key,also_pull=False):
         _register_persist_arm(key,arm["id"])
         return arm["id"],arm["value"]
     except KeyError,e:
-        raise KeyError("No experiment defined for bandit key: %s" % key)
+        raise MABConfigException("No experiment defined for bandit key: %s" % key)
 
 class MABConfigException(Exception):
     """Raised when internal state in MAB setup is invalid"""
