@@ -1,4 +1,4 @@
-from random import random,choice,uniform
+from random import random, choice, uniform
 from math import log
 
 class Bandit(object):
@@ -9,8 +9,8 @@ class Bandit(object):
     """
 
     @classmethod
-    def fromdict(cls,dict_spec):
-        extra_args = dict([(key,value) for key,value in dict_spec.items() if key not in ["arms","pulls","reward","values","bandit_type"]])
+    def fromdict(cls, dict_spec):
+        extra_args = dict([(key, value) for key, value in dict_spec.items() if key not in ["arms", "pulls", "reward", "values", "bandit_type"]])
 
         bandit = globals()[dict_spec["bandit_type"]](**extra_args)
         bandit.arms = dict_spec["arms"]
@@ -25,30 +25,30 @@ class Bandit(object):
         self.reward = []
         self.values = []
 
-    def add_arm(self,arm_id,value=None):
+    def add_arm(self, arm_id, value=None):
         self.arms.append(arm_id)
         self.pulls.append(0)
         self.reward.append(0.0)
         self.values.append(value)
 
-    def pull_arm(self,arm_id):
+    def pull_arm(self, arm_id):
         ind = self.arms.index(arm_id)
         if ind > -1:
             self.pulls[ind] += 1
 
-    def reward_arm(self,arm_id,reward):
+    def reward_arm(self, arm_id, reward):
         ind = self.arms.index(arm_id)
         if ind > -1:
             self.reward[ind] += reward
 
     def suggest_arm(self):
         """Uniform random for default bandit.
-        
+
         Just uses random.choice to choose between arms
         """
         return self[random.choice(self.arms)]
 
-    def __getitem__(self,key):
+    def __getitem__(self, key):
         ind = self.arms.index(key)
         if ind > -1:
             arm = {
@@ -63,7 +63,7 @@ class Bandit(object):
 
     def __str__(self):
         output = '%s  ' % self.__class__.__name__
-        output += '; '.join([ '%s:%s' % (key,val) for key,val in self.__dict__.items() ])
+        output += '; '.join(['%s:%s' % (key, val) for key, val in self.__dict__.items()])
         return output
 
 class EpsilonGreedyBandit(Bandit):
@@ -75,13 +75,13 @@ class EpsilonGreedyBandit(Bandit):
     Will "exploit" the present winner more often with lower values of epsilon, "explore"
     other candidates more often with higher values of epsilon.
 
-    :param epsilon: The percentage of the time to "explore" other arms, E.G a value of 
+    :param epsilon: The percentage of the time to "explore" other arms, E.G a value of
                     0.1 will perform random assignment for %10 of traffic
     :type epsilon: float
     """
-    
-    def __init__(self,epsilon=0.1):
-        super(EpsilonGreedyBandit,self).__init__()
+
+    def __init__(self, epsilon=0.1):
+        super(EpsilonGreedyBandit, self).__init__()
         self.epsilon = epsilon
 
     def suggest_arm(self):
@@ -97,14 +97,13 @@ class EpsilonGreedyBandit(Bandit):
 
     def _running_avg(self):
         values = []
-        for ind,n in enumerate(self.pulls):
+        for ind, n in enumerate(self.pulls):
             reward = self.reward[ind]
             if n < 1 or reward < 1:
                 values.append(0)
                 continue
             this_reward = (n - 1) / float(n) * reward + (1 / float(n)) * reward
             values.append(this_reward)
-        #print self.arms,self.pulls,self.reward,values
         return values
 
     def _ind_max(self):
@@ -122,7 +121,7 @@ def all_same(items):
 
 class NaiveStochasticBandit(Bandit):
     """A naive weighted random Bandit.  Favors the winner by giving it greater weight
-    in random selection.  
+    in random selection.
 
     Good for experiments that should have final settled state (long or indefinite deploys.)
 
@@ -130,11 +129,11 @@ class NaiveStochasticBandit(Bandit):
     """
 
     def __init__(self):
-        super(NaiveStochasticBandit,self).__init__()
+        super(NaiveStochasticBandit, self).__init__()
 
     def _compute_weights(self):
         weights = []
-        for ind,n in enumerate(self.pulls):
+        for ind, n in enumerate(self.pulls):
             reward = self.reward[ind]
             try:
                 weights.append(1.0 * (float(reward)/float(n)))
@@ -146,10 +145,10 @@ class NaiveStochasticBandit(Bandit):
         """Get an arm according to the Naive Stochastic Strategy
         """
         weights = self._compute_weights()
-        random_determination = uniform(min(weights),max(weights))
-        
+        random_determination = uniform(min(weights), max(weights))
+
         cum_weight = 0.0
-        for ind,weight in enumerate(weights):
+        for ind, weight in enumerate(weights):
             cum_weight += weight
             if random_determination <= cum_weight:
                 return self[self.arms[ind]]
