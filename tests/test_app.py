@@ -34,7 +34,7 @@ class MABTestCase(unittest.TestCase):
 
         @app.route("/show_btn_decorated")
         @choose_arm("color_button")
-        def assign_arm_decorated():
+        def assign_arm_decorated(color_button):
             return flask.make_response("assigned an arm")
         
         @app.route("/reward")

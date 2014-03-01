@@ -15,6 +15,8 @@ import json
 import flask_mab.storage
 import types
 from bunch import Bunch
+from flask import _request_ctx_stack
+from functools import wraps
 
 try:
     from flask import _app_ctx_stack as stack
@@ -47,10 +49,19 @@ def choose_arm(bandit):
         if not hasattr(func, 'bandits'):
             func.bandits = []
         func.bandits.append(bandit)
-        return func
+        
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            add_args = []
+            for bandit in func.bandits:
+                arm_id, arm_value = suggest_arm_for(bandit, True)
+                add_args.append((bandit, arm_value))
+            kwargs.update(add_args)
+            return func(*args, **kwargs)
+        return wrapper 
     return decorator
 
-def reward_endpt(bandit, reward=1):
+def reward_endpt(bandit, reward_val=1):
     """Route decorator for rewards.
 
     :param bandit: The bandit/experiment to register rewards
@@ -63,8 +74,14 @@ def reward_endpt(bandit, reward=1):
     def decorator(func):
         if not hasattr(func, 'rewards'):
             func.rewards = []
-        func.rewards.append((bandit, reward))
-        return func
+        func.rewards.append((bandit, reward_val))
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for bandit, reward_amt in func.rewards:
+                reward(bandit, request.cookie_arms[bandit], reward_amt)
+            return func(*args, **kwargs)
+        return wrapper 
     return decorator
 
 class BanditMiddleware(object):
@@ -138,16 +155,6 @@ class BanditMiddleware(object):
         * remember_bandit_arms: Sets the cookie for all requests that pulled an arm
         * send_debug_header: Attaches a header for the MAB to the HTTP response for easier debugging
         """
-        @app.before_request
-        def pull_decorated_arms():
-            try:
-                func = app.view_functions[request.endpoint]
-                for bandit in func.bandits:
-                    arm_tuple = suggest_arm_for(bandit, True)
-                    setattr(func, bandit, arm_tuple[1])
-            except AttributeError:
-                #Endpoint is not a bandit endpoint, continue
-                pass
 
         @app.before_request
         def detect_last_bandits():
@@ -176,16 +183,6 @@ class BanditMiddleware(object):
 
         @app.before_request
         def after_callbacks():
-            @after_this_request
-            def run_reward_decorators(response):
-                try:
-                    func = app.view_functions[request.endpoint]
-                    for bandit, reward_amt in func.rewards:
-                        reward(bandit, request.cookie_arms[bandit], reward_amt)
-                except AttributeError:
-                    #Endpoint is not a bandit endpoint, continue
-                    pass
-
             @after_this_request
             def send_debug_header(response):
                 if app.extensions['mab'].debug_headers and _get_cookie_json(request, app.extensions['mab'].cookie_name):

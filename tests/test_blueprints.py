@@ -20,7 +20,7 @@ class MABTestCase(unittest.TestCase):
 
         @bp.route("/")
         @choose_arm("some_bandit")
-        def root():
+        def root(some_bandit):
             return "hello"
 
         @bp.route("/reward")
