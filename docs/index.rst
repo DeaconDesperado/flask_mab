@@ -14,6 +14,8 @@ It can be used to test the effectiveness of virtually any parts of your app usin
 
 If you can pass it, we can test it!
 
+*Note for users of pre-release version:*  The API has `changed <https://github.com/DeaconDesperado/flask_mab/issues/2>`_ significantly with 1.0 to better fit with the `application factory pattern <http://flask.pocoo.org/docs/patterns/appfactories/>`_.
+
 Multi-armed what?!
 ------------------
 
