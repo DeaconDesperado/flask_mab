@@ -17,16 +17,17 @@ from flask.ext.mab import BanditMiddleware,choose_arm,reward_endpt
 app = Flask('test_app',template_folder="./example/templates",static_folder="./example/static")
 app.config['MAB_STORAGE_ENGINE'] = 'JSONBanditStorage'
 app.config['MAB_STORAGE_OPTS'] = ('./example/bandit_storage.json',) 
-BanditMiddleware().init_app(app) #bandit storage from previous code block
+mab = BanditMiddleware()
+mab.init_app(app) #bandit storage from previous code block
 app.add_bandit('color_btn',color_bandit) #our bandits from previous code block
 app.add_bandit('txt_btn',txt_bandit)
 
 @app.route("/")
 @choose_arm("color_btn")
 @choose_arm("txt_btn")
-def home():
+def home(color_btn, txt_btn):
     """Render the btn using values from the bandit"""
-    return render_template("ui.html",btn_color=home.color_btn,btn_text=home.txt_btn)
+    return render_template("ui.html",btn_color=color_btn,btn_text=txt_btn)
 
 @app.route("/btnclick")
 @reward_endpt("color_btn",1.0)
