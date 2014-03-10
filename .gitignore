@@ -1,6 +1,8 @@
 *.pyc
 bandits.json
+example/bandit_storage.json
 build
 dist
 env
 *.egg-info
+doc

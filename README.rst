@@ -9,6 +9,8 @@ It can be used to test the effectiveness of virtually any parts of your app usin
 
 If you can pass it, we can test it!
 
+Note for users of pre-release version:  The API has [changed](https://github.com/DeaconDesperado/flask_mab/issues/2) significantly with 1.0 to better fit with the [application factory pattern](http://flask.pocoo.org/docs/patterns/appfactories/).
+
 `Complete Documentation <http://pythonhosted.org/Flask-MAB/>`_.
 
 Multi-armed what?!
@@ -64,12 +66,16 @@ bandit storage interface that can be implemented to save all the experiments for
 At present, the only core implementation of this interface saves the bandits down to a JSON file at the path you specify, but this should
 work for most purposes.  For 1.0 release, implementations using MongoDB and ZODB are planned.
 
+Storage engines are attached using flask configuration directives.
+
 Let's start setting up our bandit file storage::
 
-    from flask.ext.mab.storage import JSONBanditStorage
-    bandit_storage = JSONBanditStorage("./writable/path/here.json")
+    app.config['MAB_STORAGE_ENGINE'] = 'JSONBanditStorage'
+    app.config['MAB_STORAGE_OPTS'] = ('./example/bandit_storage.json',) 
 
 This storage instance will be passed into our bandit middleware and all values that need to be persisted will be handled under the hood.
+
+The storage opts are just arguments to be passed to the storage instance constructor (in this case, just the path to a flat file to store the information.)
 
 Create bandits and assigning arms
 ---------------------------------
@@ -84,8 +90,6 @@ Expanding upon our previous example, here are our bandits alongside our storage 
     from flask.ext.mab.storage import JSONBanditStorage
     from flask.ext.mab.bandits import EpsilonGreedyBandit
 
-    bandit_storage = JSONBanditStorage("./writable/path/here.json")
-    
     color_bandit = EpsilonGreedyBandit(0.2)
     color_bandit.add_arm("green","#00FF00")
     color_bandit.add_arm("red","#FF0000")
@@ -118,9 +122,10 @@ Again, boilerplate here could be easily cut down, but here is a rough example::
     from flask.ext.mab import BanditMiddleware
 
     app = Flask('test_app')
-    mab = BanditMiddleware(app,bandit_storage) #bandit storage from previous code block
-    mab.add_bandit('color_btn',color_bandit) #our bandits from previous code block
-    mab.add_bandit('txt_btn',txt_bandit)
+    mab = BanditMiddleware() 
+    mab.init_app(app)
+    app.add_bandit('color_btn',color_bandit) #our bandits from previous code block
+    app.add_bandit('txt_btn',txt_bandit)
 
     @app.route("/")
     def home():
@@ -136,53 +141,12 @@ Now our app understands that it should be tracking two experiments and persistin
 user will be persisted to cookies.  However, we still need to make the system understand what endpoints use which experiments.  In our example case,
 the "/" route is going to render the button, and so both states will need to be assigned there.  The "/btnclick" endpoint, alternatively, is where our 
 `reward` is determined, the theoretical "payoff" that state won us.  In this case, its a boolean, assigning a 1 if the button gets clicked.  So how are these
-two signals sent to the middleware?
-
-There are two approaches to sending these signals.  The first is to call methods of the **BanditMiddleware**.  The second is to use convenience decorators, much 
-like the route one from flask.
-
-Using signal methods
-++++++++++++++++++++
-
-To make use of the signal methods, all we need do is instruct the middleware where our arms are "pulled" and when they "win".  Our routes could be modified as follows::
-
-    @app.route("/")
-    def home():
-        """Render the btn using values from the bandit"""
-        color_arm_id,color = mab.suggest_arm("color_btn",True)
-        text_arm_id,txt = mab.suggest_arm("txt_btn",True)
-        return render_template("ui.html",btn_color=color,btn_text=txt)
-
-    @app.route("/btnclick")
-    def reward():
-        """Button was clicked!"""
-        mab.reward("color_btn",1.0)
-        mab.reward("txt_btn",1.0)
-        return render_template("btnclick.html")
-
-Using these calls, our middleware knows that the it should suggest some values for the route endpoint.  When calling suggest_arm, we identify the bandit/experiment we need a value
-assignment for. The second argument to :meth:`flask_mab.__init__.BanditMiddleware.suggest_arm` tells our middleware that we should also render a "pull" (in this case and 
-impression of the text and color) for the arm it assigns, since the button is also rendered at this endpoint.  
-The tuple we receive back consists of two elements, the name of the arm we created and the value (in this case the color and text).
-
-It should be stressed that things like colors are probably best stored in CSS, but for this example we'll pass the values right into jinja.  You could consider setting up a 
-dedicated endpoint for experiments with styles like this, one that could parse and render your CSS.  The rough idea here is to leave what the bandit actually affects up to you.
-
-On the other side of the process, our "/btnclick" endpoint now knows that whatever "arms" assigned to this user worked out well, because the user clicked it.  The 
-:meth:`flask_mab.__init__.BanditMiddleware.reward` function knows to look in our user's cookie for the values that were assigned to her and give them some props.  We're using
-booleans here, but you could pass any amount of reward in the event that some states in your experiment are better than others.
-
-That's it!  This user's feedback will be persisted by the middleware and used to adjust the content for future users.  Over time, this pattern will start converging to a winner.
-Your app will get optimization on these two experimental features for free!
+two signals sent to the middleware?  There are decorators much like the `route` decorator that easily registers these actions.
 
 Using the decorators
 ++++++++++++++++++++
 
-To cut down on extension logic bleeding into your app endpoints, the logic from these signal functions above is also implemented as two decorators as a convenience.  This only
-works for experiments in which the amount of award is not parameterized (IE, it is consistent between all the arms), but this is a more common pattern among webapps anyway
-and works great for our example app.  
-
-Using the decorators, the two routes above could be rewritten::
+Setting up the MAB feedback cycle is easily negotiated by endpoint::
 
     @app.route("/")
     @mab.choose_arm("color_btn")
@@ -194,16 +158,19 @@ Using the decorators, the two routes above could be rewritten::
     @app.route("/btnclick")
     @mab.reward_endpt("color_btn",1.0)
     @mab.reward_endpt("txt_btn",1.0)
-    def reward():
+    def reward(color_btn, txt_btn):
         """Button was clicked!"""
         return render_template("btnclick.html")
 
-The same logic from the previous example is being run here, the only difference is that we've moved a little of the boilerplate away.  The bandit values
-(the second elements in the tuple in the function call equivalent before) are now directly assigned as properties on our endpoint function.  
+Using these decorators, our middleware knows that the it should suggest some values for both our experiments at the root endpoint.  When decorating with `choose_arm`, we identify the bandit/experiment we need a value
+assignment for. 
 
-Our reward is also assigned in a decorator.  Obviously, the reward function will be wrapped at application start, so it isn't possible to modify the reward amount on
-request in this pattern, but the resulting code is perhaps a little more elegant.
+It should be stressed that things like colors are probably best stored in CSS, but for this example we'll pass the values right into jinja.  You could consider setting up a 
+dedicated endpoint for experiments with static styles like this, one that could parse and render your CSS.  The rough idea here is to leave what the bandit actually affects up to you.
 
-You're free to use either of the two styles based on your requirements and the nature of your experiments.
+On the other side of the process, our "/btnclick" endpoint now knows that whatever "arms" assigned to this user worked out well, because the user clicked it.  The 
+:meth:`flask_mab.__init__.BanditMiddleware.reward_endpt` decorator knows to look in our user's cookie for the values that were assigned to her and give them some props.  We're using
+booleans here, but you could pass any amount of reward in the event that some states in your experiment are better than others (you could for example weight your experiments differently.)
 
-This app is included with the source as a runnable example in the "example" directory, so feel free to use it as a starting point.
+That's it!  This user's feedback will be persisted by the middleware and used to adjust the content for future users.  Over time, this pattern will start converging to a winner.
+Your app will get optimized on these two experimental features for free!
