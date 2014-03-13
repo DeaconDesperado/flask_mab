@@ -119,14 +119,14 @@ Setting up the MAB feedback cycle is easily negotiated by endpoint::
     @app.route("/")
     @mab.choose_arm("color_btn")
     @mab.choose_arm("txt_btn")
-    def home():
+    def home(color_btn, txt_btn):
         """Render the btn using values from the bandit"""
         return render_template("ui.html",btn_color=home.color_btn,btn_text=home.txt_btn)
 
     @app.route("/btnclick")
     @mab.reward_endpt("color_btn",1.0)
     @mab.reward_endpt("txt_btn",1.0)
-    def reward(color_btn, txt_btn):
+    def reward():
         """Button was clicked!"""
         return render_template("btnclick.html")
 

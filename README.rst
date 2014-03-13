@@ -151,18 +151,18 @@ Setting up the MAB feedback cycle is easily negotiated by endpoint::
     @app.route("/")
     @mab.choose_arm("color_btn")
     @mab.choose_arm("txt_btn")
-    def home():
+    def home(color_btn, txt_btn):
         """Render the btn using values from the bandit"""
         return render_template("ui.html",btn_color=home.color_btn,btn_text=home.txt_btn)
 
     @app.route("/btnclick")
     @mab.reward_endpt("color_btn",1.0)
     @mab.reward_endpt("txt_btn",1.0)
-    def reward(color_btn, txt_btn):
+    def reward():
         """Button was clicked!"""
         return render_template("btnclick.html")
 
-Using these decorators, our middleware knows that the it should suggest some values for both our experiments at the root endpoint.  When decorating with `choose_arm`, we identify the bandit/experiment we need a value assignment for.  forJust like parameters from your route **these values are passed into the view function in the order you decorated for them, always after your route params** 
+Using these decorators, our middleware knows that the it should suggest some values for both our experiments at the root endpoint.  When decorating with `choose_arm`, we identify the bandit/experiment we need a value assignment for.  Just like parameters from your route **these values are passed into the view function in the order you decorated for them, always after your route params** 
 
 It should be stressed that things like colors are probably best stored in CSS, but for this example we'll pass the values right into jinja.  You could consider setting up a 
 dedicated endpoint for experiments with static styles like this, one that could parse and render your CSS.  The rough idea here is to leave what the bandit actually affects up to you.
