@@ -49,7 +49,7 @@ def choose_arm(bandit):
         if not hasattr(func, 'bandits'):
             func.bandits = []
         func.bandits.append(bandit)
-        
+
         @wraps(func)
         def wrapper(*args, **kwargs):
             add_args = []
@@ -58,7 +58,7 @@ def choose_arm(bandit):
                 add_args.append((bandit, arm_value))
             kwargs.update(add_args)
             return func(*args, **kwargs)
-        return wrapper 
+        return wrapper
     return decorator
 
 def reward_endpt(bandit, reward_val=1):
@@ -81,7 +81,7 @@ def reward_endpt(bandit, reward_val=1):
             for bandit, reward_amt in func.rewards:
                 reward(bandit, request.cookie_arms[bandit], reward_amt)
             return func(*args, **kwargs)
-        return wrapper 
+        return wrapper
     return decorator
 
 class BanditMiddleware(object):
@@ -269,13 +269,13 @@ def suggest_arm_for(key, also_pull=False):
         if also_pull:
             pull(key, arm["id"])
         return arm["id"], arm["value"]
-    except (AttributeError, TypeError, ValueError), err:
+    except (AttributeError, TypeError, ValueError) as err:
         arm = app.extensions['mab'].bandits[key].suggest_arm()
         if also_pull:
             pull(key, arm["id"])
         _register_persist_arm(key, arm["id"])
         return arm["id"], arm["value"]
-    except KeyError, err:
+    except KeyError as err:
         raise MABConfigException("No experiment defined for bandit key: %s" % key)
 
 class MABConfigException(Exception):
