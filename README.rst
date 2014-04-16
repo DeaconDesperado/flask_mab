@@ -82,8 +82,8 @@ Create bandits and assigning arms
 
 The next step is to create a bandit for each experiment we want to test.
 
-There are several different bandit implemenations included, but for the purposes of this example we'll be using an :mod:`flask_mab.bandits.EpsilonGreedyBandit`,
-an algorithm which aggressively assigns the present winner according to a fixed constant value, `epsilon`
+There are several different bandit implemenations included, but for the purposes of this example we'll be using an bandits.EpsilonGreedyBandit,
+an algorithm which aggressively assigns the present winner according to a fixed constant value, epsilon
 
 Expanding upon our previous example, here are our bandits alongside our storage engine::
 
@@ -110,7 +110,7 @@ defining a function to be more convenient.
 Attaching the middleware
 ------------------------
 
-The main :mod:`flask_mab.__init__.BanditMiddleware` is where all the magic happens.  Attaching it to our app, assigning it some bandits, and sending it pull and reward 
+The main BanditMiddleware is where all the magic happens.  Attaching it to our app, assigning it some bandits, and sending it pull and reward 
 signals is all that's necessary to get the test going.
 
 Expanding on our example, we'll define a simple flask app with some basic routes for rendering the interface.  These routes will also understand how to reward the right
@@ -140,8 +140,8 @@ Again, boilerplate here could be easily cut down, but here is a rough example::
 Now our app understands that it should be tracking two experiments and persisting their values to a file.  "Arms" that get selected for every 
 user will be persisted to cookies.  However, we still need to make the system understand what endpoints use which experiments.  In our example case,
 the "/" route is going to render the button, and so both states will need to be assigned there.  The "/btnclick" endpoint, alternatively, is where our 
-`reward` is determined, the theoretical "payoff" that state won us.  In this case, its a boolean, assigning a 1 if the button gets clicked.  So how are these
-two signals sent to the middleware?  There are decorators much like the `route` decorator that easily registers these actions.
+reward is determined, the theoretical "payoff" that state won us.  In this case, its a boolean, assigning a 1 if the button gets clicked.  So how are these
+two signals sent to the middleware?  There are decorators much like the route decorator that easily registers these actions.
 
 Using the decorators
 ++++++++++++++++++++
@@ -162,13 +162,13 @@ Setting up the MAB feedback cycle is easily negotiated by endpoint::
         """Button was clicked!"""
         return render_template("btnclick.html")
 
-Using these decorators, our middleware knows that the it should suggest some values for both our experiments at the root endpoint.  When decorating with `choose_arm`, we identify the bandit/experiment we need a value assignment for.  Just like parameters from your route **these values are passed into the view function in the order you decorated for them, always after your route params** 
+Using these decorators, our middleware knows that the it should suggest some values for both our experiments at the root endpoint.  When decorating with choose_arm, we identify the bandit/experiment we need a value assignment for.  Just like parameters from your route **these values are passed into the view function in the order you decorated for them, always after your route params** 
 
 It should be stressed that things like colors are probably best stored in CSS, but for this example we'll pass the values right into jinja.  You could consider setting up a 
 dedicated endpoint for experiments with static styles like this, one that could parse and render your CSS.  The rough idea here is to leave what the bandit actually affects up to you.
 
 On the other side of the process, our "/btnclick" endpoint now knows that whatever "arms" assigned to this user worked out well, because the user clicked it.  The 
-:meth:`flask_mab.__init__.BanditMiddleware.reward_endpt` decorator knows to look in our user's cookie for the values that were assigned to her and give them some props.  We're using
+BanditMiddleware.reward_endpt decorator knows to look in our user's cookie for the values that were assigned to her and give them some props.  We're using
 booleans here, but you could pass any amount of reward in the event that some states in your experiment are better than others (you could for example weight your experiments differently.)
 
 That's it!  This user's feedback will be persisted by the middleware and used to adjust the content for future users.  Over time, this pattern will start converging to a winner.
