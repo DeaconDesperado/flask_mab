@@ -46,12 +46,14 @@ def choose_arm(bandit):
     :type bandit: string
     """
     def decorator(func):
+        #runs @ service init
         if not hasattr(func, 'bandits'):
             func.bandits = []
         func.bandits.append(bandit)
 
         @wraps(func)
         def wrapper(*args, **kwargs):
+            #runs at endpoint hit
             add_args = []
             for bandit in func.bandits:
                 arm_id, arm_value = suggest_arm_for(bandit, True)
@@ -263,18 +265,23 @@ def suggest_arm_for(key, also_pull=False):
     :raises KeyError: in case requested experiment does not exist
     """
     app = current_app
+    if not hasattr(request, "bandits"):
+        request.bandits = {}
+    if request.bandits.get(key,None): return request.bandits[key]
     try:
         cookie_arms = _get_cookie_json(request, app.config.get("MAB_COOKIE_NAME"))
         arm = app.extensions['mab'].bandits[key][cookie_arms[key]]
         if also_pull:
             pull(key, arm["id"])
-        return arm["id"], arm["value"]
+        request.bandits[key] = arm["id"], arm["value"]
+        return request.bandits[key]
     except (AttributeError, TypeError, ValueError) as err:
         arm = app.extensions['mab'].bandits[key].suggest_arm()
         if also_pull:
             pull(key, arm["id"])
         _register_persist_arm(key, arm["id"])
-        return arm["id"], arm["value"]
+        request.bandits[key] = arm["id"], arm["value"]
+        return request.bandits[key]
     except KeyError as err:
         raise MABConfigException("No experiment defined for bandit key: %s" % key)
 
