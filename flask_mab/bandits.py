@@ -154,3 +154,13 @@ class NaiveStochasticBandit(Bandit):
                 return self[self.arms[ind]]
         return self[self.arms[0]]
 
+
+class AnnealingSoftmaxBandit(Bandit):
+    """An Annealing Softmax bandit.  Entropy gradually lessens over time.
+    Will reduce experimentation as pulls increase
+    """
+
+    def suggest_arm(self):
+        """Get an arm according to the Annealing Softmax Strategy
+        """
+        pass
