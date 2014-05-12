@@ -32,7 +32,6 @@ class Bandit(object):
         self.values.append(value)
 
     def pull_arm(self, arm_id):
-        print self.__class__.__name__, arm_id
         ind = self.arms.index(arm_id)
         if ind > -1:
             self.pulls[ind] += 1

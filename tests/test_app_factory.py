@@ -47,7 +47,7 @@ class MABTestCase(unittest.TestCase):
         @choose_arm(self.name_to_test)
         def assign_arm_decorated(**kwargs):
             return flask.make_response("assigned an arm")
-        
+
         @app.route("/reward")
         def reward_cookie_arm():
             assigned_arm = suggest_arm_for(self.name_to_test)
@@ -104,6 +104,7 @@ class MABTestCase(unittest.TestCase):
         return dict([tuple(tup.split(":")) for tup in key_vals])
 
     def test_new_session(self):
+        self.app_client.cookie_jar.clear()
         first_req = self.app_client.get("/show_btn")
         assert first_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
         self.app_client.cookie_jar.clear()
@@ -117,7 +118,7 @@ class MABTestCase(unittest.TestCase):
             assert req.headers['X-MAB-Debug'].split(';')[0].strip() == 'SAVED'
 
     def test_concurrency(self):
-        """Test that concurrent clients do not get confused 
+        """Test that concurrent clients do not get confused
         bandit arms
         """
 
