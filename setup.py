@@ -23,6 +23,11 @@ setup(
     install_requires=[
         'Flask'
     ],
+    setup_requires = [
+        'nose==1.3.0',
+        'coverage==3.7.1'
+    ],
+    test_suite='nose.collector',
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
