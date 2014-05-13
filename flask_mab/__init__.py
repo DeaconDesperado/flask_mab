@@ -97,8 +97,8 @@ class BanditMiddleware(object):
     def _register_storage(self, app):
         storage_engine = getattr(
                 flask_mab.storage,
-                app.config.get('MAB_STORAGE_ENGINE', 'JSONBanditStorage'))
-        storage_opts = app.config.get('MAB_STORAGE_OPTS', ("./bandits.json",))
+                app.config.get('MAB_STORAGE_ENGINE', 'BanditStorage'))
+        storage_opts = app.config.get('MAB_STORAGE_OPTS', tuple())
         storage_backend = storage_engine(*storage_opts)
         app.bandit_storage = storage_backend
 

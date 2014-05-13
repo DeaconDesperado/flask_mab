@@ -24,8 +24,9 @@ setup(
         'Flask'
     ],
     setup_requires = [
-        'nose==1.3.0',
-        'coverage==3.7.1'
+        'nose>=1.2.0',
+        'coverage>=3.7.0',
+        'mock>=1.0.0'
     ],
     test_suite='nose.collector',
     classifiers=[

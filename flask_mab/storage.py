@@ -26,9 +26,17 @@ class BanditDecoder(json.JSONDecoder):
         return dict_repr
 
 class BanditStorage(object):
-    """The base interface for a storage engine
+    """The base interface for a storage engine, implements no-ops for tests
     """
-    pass
+
+    def flush(self):
+        pass
+
+    def save(self, bandits):
+        pass
+
+    def load(self):
+        return {}
 
 class JSONBanditStorage(BanditStorage):
     """Json based file storage
