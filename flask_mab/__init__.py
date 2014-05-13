@@ -23,13 +23,6 @@ try:
 except ImportError:
     from flask import _request_ctx_stack as stack
 
-def _get_cookie_json(request_in, cookie_name):
-    """Utility method for cookie json"""
-    try:
-        return json.loads(request_in.cookies.get(cookie_name, ''))
-    except ValueError:
-        return False
-
 
 def choose_arm(bandit):
     """Route decorator for registering an impression conveinently
