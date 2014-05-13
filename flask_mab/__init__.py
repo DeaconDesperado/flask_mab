@@ -23,21 +23,13 @@ try:
 except ImportError:
     from flask import _request_ctx_stack as stack
 
-def after_this_request(func):
-    """Uses a list of deferred callbacks to act upon at
-    request end
-    """
-    if not hasattr(g, 'after_request_callbacks'):
-        g.after_request_callbacks = []
-    g.after_request_callbacks.append(func)
-    return func
-
 def _get_cookie_json(request_in, cookie_name):
     """Utility method for cookie json"""
     try:
         return json.loads(request_in.cookies.get(cookie_name, ''))
     except ValueError:
         return False
+
 
 def choose_arm(bandit):
     """Route decorator for registering an impression conveinently
@@ -57,12 +49,13 @@ def choose_arm(bandit):
             add_args = []
             for bandit in func.bandits:
                 #Fetch from request first here?
-                arm_id, arm_value = suggest_arm_for(bandit, True)
+                arm_id, arm_value = suggest_arm_for(bandit)
                 add_args.append((bandit, arm_value))
             kwargs.update(add_args)
             return func(*args, **kwargs)
         return wrapper
     return decorator
+
 
 def reward_endpt(bandit, reward_val=1):
     """Route decorator for rewards.
@@ -86,6 +79,7 @@ def reward_endpt(bandit, reward_val=1):
             return func(*args, **kwargs)
         return wrapper
     return decorator
+
 
 class BanditMiddleware(object):
     """The main flask extension.
@@ -145,16 +139,10 @@ class BanditMiddleware(object):
 
         Nested functions are as follows
 
-        * pull_decorated_arms: performs arm pulls for flask endpoints
-                               decorated with the :func:`choose_arm`
-                               decorator
         * detect_last_bandits: Loads any arms already assigned to this user
                                from the cookie.
         * persist_bandits:     Saves bandits down to storage engine at the end
                                of the request
-        * call_after_request_callbacks: Runs all deferred req callbacks
-        * run_reward_decorators: reward any arms for which the decorated request
-                                 and stored cookie value match
         * remember_bandit_arms: Sets the cookie for all requests that pulled an arm
         * send_debug_header: Attaches a header for the MAB to the HTTP response for easier debugging
         """
@@ -171,12 +159,6 @@ class BanditMiddleware(object):
         @app.after_request
         def persist_bandits(response):
             app.bandit_storage.save(app.extensions['mab'].bandits)
-            return response
-
-        @app.after_request
-        def call_after_request_callbacks(response):
-            for callback in getattr(g, 'after_request_callbacks', ()):
-                callback(response)
             return response
 
         @app.after_request
@@ -222,25 +204,7 @@ def add_bandit(app, name, bandit=None):
         app.extensions['mab'].bandits[name] = bandit
 
 
-def reward(bandit_id, arm, reward_amt=1):
-    """Register an arbitrary "reward" on an arm
-
-    :param bandit_id: The bandit/experiment in question
-    :type bandit_id: string
-    :param arm: The arm to register reward for
-    :type arm: string
-    :param reward_amt: The amount of reward apply
-    :type reward_amt: float
-    """
-    app = current_app
-    try:
-        app.extensions['mab'].bandits[bandit_id].reward_arm(arm, reward_amt)
-    except KeyError:
-        #bandit does not exist
-        raise MABConfigException("No experiment defined for bandit key: %s" % bandit_id)
-
-
-def suggest_arm_for(key, also_pull=False):
+def suggest_arm_for(key):
     """Get an experimental outcome by id.  The primary way the implementor interfaces with their
     experiments.
 
@@ -249,7 +213,6 @@ def suggest_arm_for(key, also_pull=False):
     :param key: The bandit/experiment to get a suggested arm for
     :type key: string
     :param also_pull: Should we register a pull/impression at the same time as suggesting
-    :type also_pull: bool
     :raises KeyError: in case requested experiment does not exist
     """
     app = current_app
