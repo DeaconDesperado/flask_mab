@@ -1,5 +1,5 @@
 from random import random, choice, uniform
-from math import log
+from math import log, exp
 
 class Bandit(object):
     """The primary bandit interface.  Don't use this unless you really
@@ -145,12 +145,42 @@ class NaiveStochasticBandit(Bandit):
         """Get an arm according to the Naive Stochastic Strategy
         """
         weights = self._compute_weights()
-        random_determination = uniform(min(weights), max(weights))
+        random_determination = uniform(0.0, 1.0)
 
         cum_weight = 0.0
         for ind, weight in enumerate(weights):
             cum_weight += weight
-            if random_determination <= cum_weight:
+            if cum_weight > random_determination:
                 return self[self.arms[ind]]
         return self[self.arms[0]]
 
+
+class SoftmaxBandit(NaiveStochasticBandit):
+
+    def __init__(self, tau=1.0):
+        super(SoftmaxBandit, self).__init__()
+        self.tau = tau
+
+    def _compute_weights(self):
+        weights = []
+        total_reward = sum([exp(x / self.tau) for x in self.reward])
+        for ind, n in enumerate(self.pulls):
+            weights.append(exp(self.reward[ind] / self.tau) / total_reward)
+        return weights
+
+
+class AnnealingSoftmaxBandit(NaiveStochasticBandit):
+
+    def __init__(self, tau=0):
+        super(AnnealingSoftmaxBandit, self).__init__()
+        self.tau = tau
+
+    def _compute_weights(self):
+        t = sum(self.pulls) + 1
+        self.tau = 1 / log(t +  0.0000001)
+
+        weights = []
+        total_reward = sum([exp(x / self.tau) for x in self.reward])
+        for ind, n in enumerate(self.pulls):
+            weights.append(exp(self.reward[ind] / self.tau) / total_reward)
+        return weights

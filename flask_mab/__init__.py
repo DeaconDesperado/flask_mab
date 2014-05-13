@@ -46,14 +46,17 @@ def choose_arm(bandit):
     :type bandit: string
     """
     def decorator(func):
+        #runs @ service init
         if not hasattr(func, 'bandits'):
             func.bandits = []
         func.bandits.append(bandit)
 
         @wraps(func)
         def wrapper(*args, **kwargs):
+            #runs at endpoint hit
             add_args = []
             for bandit in func.bandits:
+                #Fetch from request first here?
                 arm_id, arm_value = suggest_arm_for(bandit, True)
                 add_args.append((bandit, arm_value))
             kwargs.update(add_args)
@@ -79,7 +82,7 @@ def reward_endpt(bandit, reward_val=1):
         @wraps(func)
         def wrapper(*args, **kwargs):
             for bandit, reward_amt in func.rewards:
-                reward(bandit, request.cookie_arms[bandit], reward_amt)
+                request.bandits_reward.add((bandit, request.bandits[bandit], reward_amt))
             return func(*args, **kwargs)
         return wrapper
     return decorator
@@ -155,12 +158,15 @@ class BanditMiddleware(object):
         * remember_bandit_arms: Sets the cookie for all requests that pulled an arm
         * send_debug_header: Attaches a header for the MAB to the HTTP response for easier debugging
         """
-
         @app.before_request
         def detect_last_bandits():
             bandits = request.cookies.get(app.extensions['mab'].cookie_name)
+            request.bandits_save = False
+            request.bandits_reward = set()
             if bandits:
-                request.cookie_arms = json.loads(bandits)
+                request.bandits = json.loads(bandits)
+            else:
+                request.bandits = {}
 
         @app.after_request
         def persist_bandits(response):
@@ -175,34 +181,32 @@ class BanditMiddleware(object):
 
         @app.after_request
         def remember_bandit_arms(response):
-            if hasattr(g, 'arm_pulls_to_register'):
-                response.set_cookie(
-                        app.extensions['mab'].cookie_name,
-                        json.dumps(g.arm_pulls_to_register))
+            if request.bandits_save:
+                for bandit_id,arm in request.bandits.items():
+                    app.extensions['mab'].bandits[bandit_id].pull_arm(arm)
+
+            for bandit_id, arm, reward_amt in request.bandits_reward:
+                try:
+                    app.extensions['mab'].bandits[bandit_id].reward_arm(arm, reward_amt)
+                except KeyError:
+                    raise MABConfigException("Bandit %s not found" % bandit_id)
+
+            response.set_cookie(
+                    app.extensions['mab'].cookie_name,
+                    json.dumps(request.bandits))
             return response
 
-        @app.before_request
-        def after_callbacks():
-            @after_this_request
-            def send_debug_header(response):
-                if app.extensions['mab'].debug_headers and _get_cookie_json(request, app.extensions['mab'].cookie_name):
-                    response.headers['X-MAB-Debug'] = "SAVED; "+';'.join(
-                            ['%s:%s' % (key, val) for key, val in request.cookie_arms.items()])
-                elif app.extensions['mab'].debug_headers and hasattr(g, 'arm_pulls_to_register'):
-                    response.headers['X-MAB-Debug'] = "STORE; "+';'.join(['%s:%s' % (key, val) for key, val in g.arm_pulls_to_register.items()])
-                return response
+        @app.after_request
+        def send_debug_header(response):
+            if app.extensions['mab'].debug_headers and request.bandits_save:
+                response.headers['X-MAB-Debug'] = "STORE; "+';'.join(
+                        ['%s:%s' % (key, val) for key, val in request.bandits.items()])
+            elif app.extensions['mab'].debug_headers:
+                response.headers['X-MAB-Debug'] = "SAVED; "+';'.join(['%s:%s' % (key, val) for key, val in request.bandits.items()])
+            return response
 
         app.add_bandit = types.MethodType(add_bandit, app)
 
-def _register_persist_arm(bandit_id, arm_id):
-    """Puts suggestions on the stack to be saved to a cookie
-    after request
-    """
-    if not hasattr(g, 'arm_pulls_to_register'):
-        g.arm_pulls_to_register = {}
-    g.arm_pulls_to_register[bandit_id] = arm_id
-
-#Public methods for operations on the app's bandit properties below
 
 def add_bandit(app, name, bandit=None):
     """Attach a bandit for an experiment
@@ -217,20 +221,6 @@ def add_bandit(app, name, bandit=None):
     else:
         app.extensions['mab'].bandits[name] = bandit
 
-def pull(bandit_id, arm):
-    """Register a pull (impression) for an arm
-
-    :param bandit: The bandit/experiment name
-    :type bandit: string
-    :param arm: The name of the arm
-    :type arm: string
-    """
-    app = current_app
-    try:
-        app.extensions['mab'].bandits[bandit_id].pull_arm(arm)
-    except KeyError:
-        #bandit does not exist
-        pass
 
 def reward(bandit_id, arm, reward_amt=1):
     """Register an arbitrary "reward" on an arm
@@ -264,19 +254,18 @@ def suggest_arm_for(key, also_pull=False):
     """
     app = current_app
     try:
-        cookie_arms = _get_cookie_json(request, app.config.get("MAB_COOKIE_NAME"))
-        arm = app.extensions['mab'].bandits[key][cookie_arms[key]]
-        if also_pull:
-            pull(key, arm["id"])
+        #Try to get the selected bandits from cookie
+        arm = app.extensions['mab'].bandits[key][request.bandits[key]]
         return arm["id"], arm["value"]
-    except (AttributeError, TypeError, ValueError) as err:
-        arm = app.extensions['mab'].bandits[key].suggest_arm()
-        if also_pull:
-            pull(key, arm["id"])
-        _register_persist_arm(key, arm["id"])
-        return arm["id"], arm["value"]
-    except KeyError as err:
-        raise MABConfigException("No experiment defined for bandit key: %s" % key)
+    except (AttributeError, TypeError, KeyError) as err:
+        #Assign an arm for a new client
+        try:
+            arm = app.extensions['mab'].bandits[key].suggest_arm()
+            request.bandits[key] = arm["id"]
+            request.bandits_save = True
+            return arm["id"], arm["value"]
+        except KeyError:
+            raise MABConfigException("Bandit %s not found" % key)
 
 class MABConfigException(Exception):
     """Raised when internal state in MAB setup is invalid"""
