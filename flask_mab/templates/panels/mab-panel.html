@@ -1,1 +1,62 @@
-hello world
+<style type="text/css">
+.code {
+    font-family: 'Consolas', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', 'Monaco', 'Courier New', monospace !important;
+    background:#efe !important;
+}
+.mab-stack-trace {
+    line-height: 2.3em !important;
+}
+.mab-stack-trace tr {
+    border-top: 1px dotted #ccc !important;
+}
+.mab-stack-trace table th {
+    text-align: left !important;
+}
+
+#flDebug .mab-stack-trace, #flDebug .mongo-data, .mongo-op-table .toolbar-query {
+    display:none;
+}
+
+#flDebug .mab-stack-trace table tr.mongo-stack-trace-hide {
+    background: #eee!important;
+    display:none;
+}
+
+#flDebug .panelContent .mab-op-table,
+#flDebug .panelContent .mab-stack-trace table { display: table;}
+
+.mab-op-table td.fifty {width: 50%; word-wrap: break-word;}
+.mab-op-table td.thirty {width: 30%; word-wrap: break-word;}
+
+</style>
+
+
+<table class="mab-op-table">
+    <tr>
+        <td>Cookie name</td>
+        <td class="code">{{ cookie_name }}</td>
+    </tr>
+    <tr>
+        <td>Raw Cookie</td>
+        <td class="code">{{ raw_cookie }}</td>
+    </tr>
+</table>
+
+
+<script type="text/javascript" src="/_debug_toolbar/static/js/jquery.js"></script>
+<script>
+(function($) {
+
+    $('a.mab-toggle-trace').click(function(){
+        $("#"+$(this).attr('data-row')).toggle();
+    });
+    $('a.mab-toggle-data').click(function(){
+        $("#"+$(this).attr('data-row')).toggle();
+    });
+
+    $('a.mab-toggle-full-trace').click(function(){
+        $(this).closest('table').find('tr.mab-stack-trace-hide').toggle();
+    });
+
+})(jQuery.noConflict(true));
+</script>

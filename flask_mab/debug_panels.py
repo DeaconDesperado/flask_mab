@@ -1,6 +1,7 @@
 from flask import current_app
 from flask_debugtoolbar.panels import DebugPanel
 from jinja2 import PackageLoader, ChoiceLoader
+import json
 
 package_loader = PackageLoader('flask.ext.mab', 'templates')
 
@@ -31,6 +32,11 @@ class BanditDebugPanel(DebugPanel):
     def url(self):
         return ''
 
+    def process_request(self, request):
+        self.raw_cookie = request.cookies.get(current_app.extensions['mab'].cookie_name, '{}')
+
     def content(self):
         context = self.context.copy()
+        context['cookie_name'] = current_app.extensions['mab'].cookie_name
+        context['raw_cookie'] = self.raw_cookie
         return self.render('panels/mab-panel.html', context)
