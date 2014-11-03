@@ -22,6 +22,10 @@
     display:none;
 }
 
+.mab-op-table tr.winner {
+    background-color:#b4eab4 !important;
+}
+
 #flDebug .panelContent .mab-op-table,
 #flDebug .panelContent .mab-stack-trace table { display: table;}
 
@@ -32,31 +36,75 @@
 
 
 <table class="mab-op-table">
-    <tr>
+    <tr class="flDebugOdd">
         <td>Cookie name</td>
-        <td class="code">{{ cookie_name }}</td>
+        <td>{{ cookie_name }}</td>
     </tr>
-    <tr>
+    <tr class="flDebugEven">
         <td>Raw Cookie</td>
-        <td class="code">{{ raw_cookie }}</td>
+        <td>{{ raw_cookie }}</td>
     </tr>
 </table>
 
+<table class="mab-op-table">
+    <tr class="flDebugOdd">
+        <td>Storage engine</td>
+        <td>{{ storage_engine }}</td>
+    </tr>
+    <tr class="flDebugEven">
+        <td>Storage Options</td>
+        <td>
+            {% for opt in storage_opts %}
+                {{opt}},
+            {% endfor %}
+        </td>
+    </tr>
+</table>
+
+{% for name,bandit in bandits %}
+    <h4>{{name}}:</h4>
+    Green table rows are values for this request
+    <table class="mab-op-table">
+        <colgroup>
+            <col style="width:15%;">
+            <col style="width:15%;">
+            <col style="width:15%;">
+            <col style="width:35%;">
+        </colgroup>
+        <thead>
+            <tr>    
+                <th>Arm Key</th>
+                <th>Impressions</th>
+                <th>Reward</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        {% for arm in bandit.arms %}
+            <tr id="bandit-{{name}}-{{arm}}" class="{{ loop.cycle('flDebugOdd', 'flDebugEven') }}">
+                <td>{{ arm }}</td>
+                <td>{{bandit[arm]['pulls']}}</td>
+                <td>{{bandit[arm]['reward']}}</td>
+                <td>{{bandit[arm]['value']}}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endfor %}
 
 <script type="text/javascript" src="/_debug_toolbar/static/js/jquery.js"></script>
 <script>
 (function($) {
 
-    $('a.mab-toggle-trace').click(function(){
-        $("#"+$(this).attr('data-row')).toggle();
-    });
-    $('a.mab-toggle-data').click(function(){
-        $("#"+$(this).attr('data-row')).toggle();
-    });
+    function getCookie(name) {
+        var value = "; " + document.cookie;
+        var parts = value.split("; " + name + "=");
+        if (parts.length == 2) return parts.pop().split(";").shift();
+    }
 
-    $('a.mab-toggle-full-trace').click(function(){
-        $(this).closest('table').find('tr.mab-stack-trace-hide').toggle();
-    });
+    var mab_cookie = JSON.parse(eval(getCookie("{{cookie_name}}"))); 
+    for(var name in mab_cookie){
+        console.log('bandit-'+name+'-'+mab_cookie[name]);
+        $('#bandit-'+name+'-'+mab_cookie[name]).addClass("winner");
+    }
 
 })(jQuery.noConflict(true));
 </script>
