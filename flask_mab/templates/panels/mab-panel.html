@@ -102,7 +102,6 @@
 
     var mab_cookie = JSON.parse(eval(getCookie("{{cookie_name}}"))); 
     for(var name in mab_cookie){
-        console.log('bandit-'+name+'-'+mab_cookie[name]);
         $('#bandit-'+name+'-'+mab_cookie[name]).addClass("winner");
     }
 
