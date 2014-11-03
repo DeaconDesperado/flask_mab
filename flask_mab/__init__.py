@@ -23,6 +23,7 @@ try:
 except ImportError:
     from flask import _request_ctx_stack as stack
 
+__version__ = "1.1.0"
 
 def choose_arm(bandit):
     """Route decorator for registering an impression conveinently
