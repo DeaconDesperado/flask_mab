@@ -4,6 +4,12 @@ Changelog/Roadmap
 Changelog
 ------------
 
+1.1.1
+~~~~~
+* Moved references to storage off app instance
+* Added support for debug toolbar
+* Adopted canonical versioning
+
 1.1.0
 ~~~~~
 * Fixed false positive bug on routes with more than one reward or choose decorator.
