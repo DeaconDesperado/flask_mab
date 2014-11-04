@@ -1,0 +1,109 @@
+<style type="text/css">
+.code {
+    font-family: 'Consolas', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', 'Monaco', 'Courier New', monospace !important;
+    background:#efe !important;
+}
+.mab-stack-trace {
+    line-height: 2.3em !important;
+}
+.mab-stack-trace tr {
+    border-top: 1px dotted #ccc !important;
+}
+.mab-stack-trace table th {
+    text-align: left !important;
+}
+
+#flDebug .mab-stack-trace, #flDebug .mongo-data, .mongo-op-table .toolbar-query {
+    display:none;
+}
+
+#flDebug .mab-stack-trace table tr.mongo-stack-trace-hide {
+    background: #eee!important;
+    display:none;
+}
+
+.mab-op-table tr.winner {
+    background-color:#b4eab4 !important;
+}
+
+#flDebug .panelContent .mab-op-table,
+#flDebug .panelContent .mab-stack-trace table { display: table;}
+
+.mab-op-table td.fifty {width: 50%; word-wrap: break-word;}
+.mab-op-table td.thirty {width: 30%; word-wrap: break-word;}
+
+</style>
+
+
+<table class="mab-op-table">
+    <tr class="flDebugOdd">
+        <td>Cookie name</td>
+        <td>{{ cookie_name }}</td>
+    </tr>
+    <tr class="flDebugEven">
+        <td>Raw Cookie</td>
+        <td>{{ raw_cookie }}</td>
+    </tr>
+</table>
+
+<table class="mab-op-table">
+    <tr class="flDebugOdd">
+        <td>Storage engine</td>
+        <td>{{ storage_engine }}</td>
+    </tr>
+    <tr class="flDebugEven">
+        <td>Storage Options</td>
+        <td>
+            {% for opt in storage_opts %}
+                {{opt}},
+            {% endfor %}
+        </td>
+    </tr>
+</table>
+
+{% for name,bandit in bandits %}
+    <h4>{{name}}:</h4>
+    Green table rows are values for this request
+    <table class="mab-op-table">
+        <colgroup>
+            <col style="width:15%;">
+            <col style="width:15%;">
+            <col style="width:15%;">
+            <col style="width:35%;">
+        </colgroup>
+        <thead>
+            <tr>    
+                <th>Arm Key</th>
+                <th>Impressions</th>
+                <th>Reward</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        {% for arm in bandit.arms %}
+            <tr id="bandit-{{name}}-{{arm}}" class="{{ loop.cycle('flDebugOdd', 'flDebugEven') }}">
+                <td>{{ arm }}</td>
+                <td>{{bandit[arm]['pulls']}}</td>
+                <td>{{bandit[arm]['reward']}}</td>
+                <td>{{bandit[arm]['value']}}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endfor %}
+
+<script type="text/javascript" src="/_debug_toolbar/static/js/jquery.js"></script>
+<script>
+(function($) {
+
+    function getCookie(name) {
+        var value = "; " + document.cookie;
+        var parts = value.split("; " + name + "=");
+        if (parts.length == 2) return parts.pop().split(";").shift();
+    }
+
+    var mab_cookie = JSON.parse(eval(getCookie("{{cookie_name}}"))); 
+    for(var name in mab_cookie){
+        $('#bandit-'+name+'-'+mab_cookie[name]).addClass("winner");
+    }
+
+})(jQuery.noConflict(true));
+</script>

@@ -55,6 +55,7 @@ Any problem you can model in your app logic can be optimized using the bandit al
    :maxdepth: 4 
    
    getting_started
+   debug_toolbar
    flask_mab
    bandits
    storage
