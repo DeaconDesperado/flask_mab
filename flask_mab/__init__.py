@@ -93,7 +93,7 @@ class BanditMiddleware(object):
                 app.config.get('MAB_STORAGE_ENGINE', 'BanditStorage'))
         storage_opts = app.config.get('MAB_STORAGE_OPTS', tuple())
         storage_backend = storage_engine(*storage_opts)
-        app.bandit_storage = storage_backend
+        app.extensions['mab'].bandit_storage = storage_backend
 
     def init_app(self, app):
         """Attach Multi Armed Bandit to application and configure
@@ -151,7 +151,7 @@ class BanditMiddleware(object):
 
         @app.after_request
         def persist_bandits(response):
-            app.bandit_storage.save(app.extensions['mab'].bandits)
+            app.extensions['mab'].bandit_storage.save(app.extensions['mab'].bandits)
             return response
 
         @app.after_request
@@ -190,7 +190,7 @@ def add_bandit(app, name, bandit=None):
     :param bandit: The bandit to use for this experiment
     :type bandit: Bandit
     """
-    saved_bandits = app.bandit_storage.load()
+    saved_bandits = app.extensions['mab'].bandit_storage.load()
     if name in saved_bandits.keys():
         app.extensions['mab'].bandits[name] = saved_bandits[name]
     else:

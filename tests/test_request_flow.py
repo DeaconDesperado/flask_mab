@@ -51,11 +51,11 @@ class RequestFlowTest(unittest.TestCase):
         self.bandit.reward_arm.assert_called_with(ANY, 1.0)
 
     def test_values_persisted(self):
-        self.app.bandit_storage.save = Mock()
+        self.app.extensions['mab'].bandit_storage.save = Mock()
         self.bandit.reward_arm = Mock()
         self.app_client.get('/show_btn_decorated')
         self.app_client.get('/reward_decorated')
         arg_dict = {'color_button': self.bandit}
-        self.app.bandit_storage.save.assert_any_call(arg_dict)
+        self.app.extensions['mab'].bandit_storage.save.assert_any_call(arg_dict)
 
 

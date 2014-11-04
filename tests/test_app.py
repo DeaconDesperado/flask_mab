@@ -82,7 +82,7 @@ class MABTestCase(unittest.TestCase):
         bandit arms
         """
 
-        self.app.bandit_storage.flush()
+        self.app.extensions['mab'].bandit_storage.flush()
 
         def request_worker(test,iden,q):
             try:
