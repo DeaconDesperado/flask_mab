@@ -123,8 +123,6 @@ class NaiveStochasticBandit(Bandit):
     """A naive weighted random Bandit.  Favors the winner by giving it greater weight
     in random selection.
 
-    Good for experiments that should have final settled state (long or indefinite deploys.)
-
     Winner will eventually flatten out the losers if margin is great enough
     """
 

@@ -6,7 +6,7 @@ import json
 package_loader = PackageLoader('flask.ext.mab', 'templates')
 
 def _maybe_patch_jinja_loader(jinja_env):
-    """Patch the jinja_env loader to include flaskext.mongoengine
+    """Patch the jinja_env loader to include
     templates folder if necessary.
     """
     if not isinstance(jinja_env.loader, ChoiceLoader):
