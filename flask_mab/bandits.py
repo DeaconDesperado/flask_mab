@@ -198,5 +198,4 @@ class ThompsonBandit(NaiveStochasticBandit):
 
     def suggest_arm(self):
         weights = self._compute_weights()
-        print weights
         return self[self.arms[weights.index(max(weights))]]
