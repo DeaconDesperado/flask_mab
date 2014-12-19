@@ -1,4 +1,4 @@
-from random import random, choice, uniform
+from random import random, choice, uniform, betavariate
 from math import log, exp
 
 class Bandit(object):
@@ -182,3 +182,21 @@ class AnnealingSoftmaxBandit(NaiveStochasticBandit):
         for ind, n in enumerate(self.pulls):
             weights.append(exp(self.reward[ind] / self.tau) / total_reward)
         return weights
+
+class ThompsonBandit(NaiveStochasticBandit):
+
+    def __init__(self, prior=(1.0,1.0)):
+        super(ThompsonBandit, self).__init__()
+        self.prior = prior
+
+    def _compute_weights(self):
+        sampled_theta = []
+        for ind, n in enumerate(self.arms):
+            dist = betavariate(self.prior[0] + self.reward[ind], self.prior[1]+self.pulls[ind]-self.reward[ind])
+            sampled_theta += [dist]
+        return sampled_theta
+
+    def suggest_arm(self):
+        weights = self._compute_weights()
+        print weights
+        return self[self.arms[weights.index(max(weights))]]
