@@ -199,3 +199,8 @@ class ThompsonBandit(NaiveStochasticBandit):
     def suggest_arm(self):
         weights = self._compute_weights()
         return self[self.arms[weights.index(max(weights))]]
+
+    def reward_arm(self, arm_id, reward):
+        if reward != 1.0:
+            reward = 1.0
+        super(ThompsonBandit, self).reward_arm(arm_id, reward)
