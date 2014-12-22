@@ -48,6 +48,11 @@ class MonteCarloTest(unittest.TestCase):
 
         return [sim_nums, times, chosen_arms, rewards, cumulative_rewards]
 
+    def save_results(self, results, output_stream):
+        for sim in range(len(results[0])):
+            output_stream.write("  ".join([str(results[j][sim]) for j in range(len(results))]) + "\n")
+            sys.stdout.flush()
+
 
 class EpsilonGreedyTest(MonteCarloTest):
 
@@ -57,9 +62,6 @@ class EpsilonGreedyTest(MonteCarloTest):
 
     def test_bandit(self):
         results = self.run_algo(5000, 250)
-        for sim in range(len(results[0])):
-            sys.stdout.write("  ".join([str(results[j][sim]) for j in range(len(results))]) + "\n")
-            sys.stdout.flush()
         data = Counter(results[2])
         assert data.most_common(1)[0][0] is 'green'
 
