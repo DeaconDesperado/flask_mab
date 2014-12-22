@@ -55,7 +55,7 @@ class EpsilonGreedyTest(MonteCarloTest):
     true_arm_probs = dict(green=0.9, blue=0.1, red=0.1)
 
     def test_bandit(self):
-        results = self.run_algo(makeBandit(self.bandit_name, epsilon=0.3), 5000, 250)
+        results = self.run_algo(makeBandit(self.bandit_name, epsilon=0.3), 3000, 250)
         data = Counter(results[2])
         assert data.most_common(1)[0][0] is 'green'
 
@@ -64,6 +64,24 @@ class SoftmaxTest(MonteCarloTest):
     true_arm_probs = dict(green=0.2, red=0.2, blue=0.93)
 
     def test_bandit(self):
-        results = self.run_algo(makeBandit('SoftmaxBandit', tau=0.3), 1000, 250)
+        results = self.run_algo(makeBandit('SoftmaxBandit', tau=0.3), 3000, 250)
+        data = Counter(results[2])
+        assert data.most_common(1)[0][0] is 'blue'
+
+class AnnealingSoftmaxTest(MonteCarloTest):
+
+    true_arm_probs = dict(green=0.2, red=0.2, blue=0.93)
+
+    def test_bandit(self):
+        results = self.run_algo(makeBandit('AnnealingSoftmaxBandit', tau=0.3), 3000, 250)
+        data = Counter(results[2])
+        assert data.most_common(1)[0][0] is 'blue'
+
+class ThompsonBanditTest(MonteCarloTest):
+
+    true_arm_probs = dict(green=0.2, red=0.2, blue=0.93)
+
+    def test_bandit(self):
+        results = self.run_algo(makeBandit('ThompsonBandit'), 3000, 250)
         data = Counter(results[2])
         assert data.most_common(1)[0][0] is 'blue'
