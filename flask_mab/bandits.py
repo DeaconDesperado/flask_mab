@@ -162,7 +162,6 @@ class SoftmaxBandit(NaiveStochasticBandit):
     def _compute_weights(self):
         weights = []
         total_reward = sum([exp(x / self.tau) for x in self.reward])
-        print total_reward
         for ind, n in enumerate(self.pulls):
             weights.append(exp(self.reward[ind] / self.tau) / total_reward)
         return weights
@@ -172,9 +171,8 @@ class SoftmaxBandit(NaiveStochasticBandit):
         n = self.pulls[arm_index]
         r = self.reward[arm_index]
         self.reward[arm_index] = ((n - 1) / float(n)) * r + (1 / float(n)) * reward
-        print self.reward[arm_index]
 
-class AnnealingSoftmaxBandit(NaiveStochasticBandit):
+class AnnealingSoftmaxBandit(SoftmaxBandit):
 
     def __init__(self, tau=0):
         super(AnnealingSoftmaxBandit, self).__init__()
