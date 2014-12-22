@@ -1,12 +1,12 @@
 from flask.ext.mab.storage import JSONBanditStorage
-from flask.ext.mab.bandits import EpsilonGreedyBandit, AnnealingSoftmaxBandit
+from flask.ext.mab.bandits import EpsilonGreedyBandit, AnnealingSoftmaxBandit, ThompsonBandit
 
 color_bandit = EpsilonGreedyBandit(0.9)
 color_bandit.add_arm("green","green")
 color_bandit.add_arm("red","red")
 color_bandit.add_arm("blue","blue")
 
-txt_bandit = AnnealingSoftmaxBandit()
+txt_bandit = ThompsonBandit()
 txt_bandit.add_arm("casual","Hey dude, wanna buy me?")
 txt_bandit.add_arm("neutral","Add to cart")
 txt_bandit.add_arm("formal","Good day sir... care to purchase?")

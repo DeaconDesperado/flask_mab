@@ -69,7 +69,8 @@ def reward_endpt(bandit, reward_val=1):
         @wraps(func)
         def wrapper(*args, **kwargs):
             for bandit, reward_amt in func.rewards:
-                request.bandits_reward.add((bandit, request.bandits[bandit], reward_amt))
+                if bandit in request.bandits.keys():
+                    request.bandits_reward.add((bandit, request.bandits[bandit], reward_amt))
             return func(*args, **kwargs)
         return wrapper
     return decorator
@@ -159,11 +160,13 @@ class BanditMiddleware(object):
         def remember_bandit_arms(response):
             if request.bandits_save:
                 for bandit_id,arm in request.bandits.items():
+                    #hook event for saving an impression here
                     app.extensions['mab'].bandits[bandit_id].pull_arm(arm)
 
             for bandit_id, arm, reward_amt in request.bandits_reward:
                 try:
                     app.extensions['mab'].bandits[bandit_id].reward_arm(arm, reward_amt)
+                    #hook event for saving a reward line here
                 except KeyError:
                     raise MABConfigException("Bandit %s not found" % bandit_id)
 

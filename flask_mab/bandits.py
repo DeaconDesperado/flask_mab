@@ -1,5 +1,5 @@
-from random import random, choice, uniform
-from math import log, exp
+from random import random, choice, uniform, betavariate
+from math import log, exp, expm1
 
 class Bandit(object):
     """The primary bandit interface.  Don't use this unless you really
@@ -123,8 +123,6 @@ class NaiveStochasticBandit(Bandit):
     """A naive weighted random Bandit.  Favors the winner by giving it greater weight
     in random selection.
 
-    Good for experiments that should have final settled state (long or indefinite deploys.)
-
     Winner will eventually flatten out the losers if margin is great enough
     """
 
@@ -168,8 +166,13 @@ class SoftmaxBandit(NaiveStochasticBandit):
             weights.append(exp(self.reward[ind] / self.tau) / total_reward)
         return weights
 
+    def reward_arm(self, arm_id, reward):
+        arm_index = self.arms.index(arm_id)
+        n = self.pulls[arm_index]
+        r = self.reward[arm_index]
+        self.reward[arm_index] = ((n - 1) / float(n)) * r + (1 / float(n)) * reward
 
-class AnnealingSoftmaxBandit(NaiveStochasticBandit):
+class AnnealingSoftmaxBandit(SoftmaxBandit):
 
     def __init__(self, tau=0):
         super(AnnealingSoftmaxBandit, self).__init__()
@@ -184,3 +187,25 @@ class AnnealingSoftmaxBandit(NaiveStochasticBandit):
         for ind, n in enumerate(self.pulls):
             weights.append(exp(self.reward[ind] / self.tau) / total_reward)
         return weights
+
+class ThompsonBandit(NaiveStochasticBandit):
+
+    def __init__(self, prior=(1.0,1.0)):
+        super(ThompsonBandit, self).__init__()
+        self.prior = prior
+
+    def _compute_weights(self):
+        sampled_theta = []
+        for ind, n in enumerate(self.arms):
+            dist = betavariate(self.prior[0] + self.reward[ind], self.prior[1]+self.pulls[ind]-self.reward[ind])
+            sampled_theta += [dist]
+        return sampled_theta
+
+    def suggest_arm(self):
+        weights = self._compute_weights()
+        return self[self.arms[weights.index(max(weights))]]
+
+    def reward_arm(self, arm_id, reward):
+        if reward != 1.0:
+            reward = 1.0
+        super(ThompsonBandit, self).reward_arm(arm_id, reward)
