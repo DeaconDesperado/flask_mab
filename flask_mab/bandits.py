@@ -1,5 +1,5 @@
 from random import random, choice, uniform, betavariate
-from math import log, exp
+from math import log, exp, expm1
 
 class Bandit(object):
     """The primary bandit interface.  Don't use this unless you really
@@ -162,10 +162,17 @@ class SoftmaxBandit(NaiveStochasticBandit):
     def _compute_weights(self):
         weights = []
         total_reward = sum([exp(x / self.tau) for x in self.reward])
+        print total_reward
         for ind, n in enumerate(self.pulls):
             weights.append(exp(self.reward[ind] / self.tau) / total_reward)
         return weights
 
+    def reward_arm(self, arm_id, reward):
+        arm_index = self.arms.index(arm_id)
+        n = self.pulls[arm_index]
+        r = self.reward[arm_index]
+        self.reward[arm_index] = ((n - 1) / float(n)) * r + (1 / float(n)) * reward
+        print self.reward[arm_index]
 
 class AnnealingSoftmaxBandit(NaiveStochasticBandit):
 

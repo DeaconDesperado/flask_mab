@@ -11,11 +11,7 @@ class MonteCarloTest(unittest.TestCase):
             return 0.0
         return 1.0
 
-    @classmethod
-    def get_bandit(cls):
-        return makeBandit(cls.bandit_name, **cls.bandit_args)
-
-    def run_algo(self, num_sims, horizon):
+    def run_algo(self, bandit, num_sims, horizon):
         chosen_arms = [0.0 for i in range(num_sims * horizon)]
         rewards = [0.0 for i in range(num_sims * horizon)]
         cumulative_rewards = [0.0 for i in range(num_sims * horizon)]
@@ -24,8 +20,6 @@ class MonteCarloTest(unittest.TestCase):
 
         for sim in range(num_sims):
             sim = sim + 1
-            bandit = self.get_bandit()
-
 
             for t in range(horizon):
                 t = t + 1
@@ -35,6 +29,7 @@ class MonteCarloTest(unittest.TestCase):
 
                 chosen_arm = bandit.suggest_arm()
                 chosen_arms[index] = chosen_arm['id']
+                bandit.pull_arm(chosen_arm['id'])
                 reward = self.draw(chosen_arm['id'])
                 rewards[index] = reward
 
@@ -57,11 +52,18 @@ class MonteCarloTest(unittest.TestCase):
 class EpsilonGreedyTest(MonteCarloTest):
 
     bandit_name = 'EpsilonGreedyBandit'
-    bandit_args = {'epsilon':0.3}
     true_arm_probs = dict(green=0.9, blue=0.1, red=0.1)
 
     def test_bandit(self):
-        results = self.run_algo(5000, 250)
+        results = self.run_algo(makeBandit(self.bandit_name, epsilon=0.3), 5000, 250)
         data = Counter(results[2])
         assert data.most_common(1)[0][0] is 'green'
 
+class SoftmaxTest(MonteCarloTest):
+
+    true_arm_probs = dict(green=0.2, red=0.2, blue=0.93)
+
+    def test_bandit(self):
+        results = self.run_algo(makeBandit('SoftmaxBandit', tau=0.3), 1000, 250)
+        data = Counter(results[2])
+        assert data.most_common(1)[0][0] is 'blue'
