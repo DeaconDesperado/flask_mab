@@ -17,6 +17,7 @@ class Bandit(object):
         bandit.pulls = dict_spec["pulls"]
         bandit.reward = dict_spec["reward"]
         bandit.values = dict_spec["values"]
+        bandit.confidence = dict_spec.get("confidence", [0.0] * len(bandit.arms))
         return bandit
 
     def __init__(self):
@@ -24,11 +25,13 @@ class Bandit(object):
         self.pulls = []
         self.reward = []
         self.values = []
+        self.confidence = []
 
     def add_arm(self, arm_id, value=None):
         self.arms.append(arm_id)
         self.pulls.append(0)
         self.reward.append(0.0)
+        self.confidence.append(0.0)
         self.values.append(value)
 
     def pull_arm(self, arm_id):
@@ -40,6 +43,12 @@ class Bandit(object):
         ind = self.arms.index(arm_id)
         if ind > -1:
             self.reward[ind] += reward
+        self._update(ind, reward)
+
+    def _update(self, arm_index, reward):
+        n = self.pulls[arm_index]
+        current = self.confidence[arm_index]
+        self.confidence[arm_index] = ((n - 1) / float(n)) * current + (1 / float(n)) * reward
 
     def suggest_arm(self):
         """Uniform random for default bandit.
@@ -95,20 +104,8 @@ class EpsilonGreedyBandit(Bandit):
 
         return self[key]
 
-    def _running_avg(self):
-        values = []
-        for ind, n in enumerate(self.pulls):
-            reward = self.reward[ind]
-            if n < 1 or reward < 1:
-                values.append(0)
-                continue
-            this_reward = (n - 1) / float(n) * reward + (1 / float(n)) * reward
-            values.append(this_reward)
-        return values
-
     def _ind_max(self):
-        avg_reward = self._running_avg()
-        return self.arms[avg_reward.index(max(avg_reward))]
+        return self.arms[self.confidence.index(max(self.confidence))]
 
     def __str__(self):
         return Bandit.__str__(self)
@@ -161,16 +158,11 @@ class SoftmaxBandit(NaiveStochasticBandit):
 
     def _compute_weights(self):
         weights = []
-        total_reward = sum([exp(x / self.tau) for x in self.reward])
+        total_reward = sum([exp(x / self.tau) for x in self.confidence])
         for ind, n in enumerate(self.pulls):
-            weights.append(exp(self.reward[ind] / self.tau) / total_reward)
+            weights.append(exp(self.confidence[ind] / self.tau) / total_reward)
         return weights
 
-    def reward_arm(self, arm_id, reward):
-        arm_index = self.arms.index(arm_id)
-        n = self.pulls[arm_index]
-        r = self.reward[arm_index]
-        self.reward[arm_index] = ((n - 1) / float(n)) * r + (1 / float(n)) * reward
 
 class AnnealingSoftmaxBandit(SoftmaxBandit):
 
@@ -183,9 +175,9 @@ class AnnealingSoftmaxBandit(SoftmaxBandit):
         self.tau = 1 / log(t +  0.0000001)
 
         weights = []
-        total_reward = sum([exp(x / self.tau) for x in self.reward])
+        total_reward = sum([exp(x / self.tau) for x in self.confidence])
         for ind, n in enumerate(self.pulls):
-            weights.append(exp(self.reward[ind] / self.tau) / total_reward)
+            weights.append(exp(self.confidence[ind] / self.tau) / total_reward)
         return weights
 
 class ThompsonBandit(NaiveStochasticBandit):
