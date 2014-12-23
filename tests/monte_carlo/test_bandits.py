@@ -81,7 +81,7 @@ class AnnealingSoftmaxTest(MonteCarloTest):
 
 class ThompsonBanditTest(MonteCarloTest):
 
-    true_arm_probs = dict(green=0.19, red=0.29, blue=0.31)
+    true_arm_probs = dict(green=0.19, red=0.29, blue=0.35)
 
     def test_bandit(self):
         results = self.run_algo(makeBandit('ThompsonBandit'), 3000, 250)
