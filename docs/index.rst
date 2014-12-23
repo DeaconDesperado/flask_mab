@@ -31,7 +31,9 @@ be able to determine which machines were hotter than others.  A multi-armed band
 that performs exactly this determination, using your user's interaction as its "arm pulls".  Extracting winning
 patterns becomes a fluid part of interacting with the application.
 
-John Myles White has an awesome treatise on Bandit implementations in his book `Bandit Algorithms for Website Optimization <http://shop.oreilly.com/product/0636920027393.do>`_.
+While bandit algorithms can provide excellent automated optimization, it's important to note that they are not considered a replacement for classic A/B tests.  Bandits could be considered a sort of "black box," in the sense that their intuitions become opaque as they optimize.  Experiments that call for rigorous tests of statistical significance may be better suited to more traditional frameworks.
+
+John Myles White has an awesome treatise on Bandit implementations in his book `Bandit Algorithms for Website Optimization <http://shop.oreilly.com/product/0636920027393.do>`_.  Most of the code in this library consistes of his excellent guidelines reimplemented to suit the nature of the Flask request lifecycle.
 
 How does it work? 
 -----------------
