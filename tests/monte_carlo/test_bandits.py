@@ -5,6 +5,8 @@ import sys
 from collections import Counter
 
 class MonteCarloTest(unittest.TestCase):
+    """Tests to ensure that over many iterations, a winner
+    eventually converges"""
 
     def draw(self, arm_name):
         if random.random() > self.true_arm_probs[arm_name]:
@@ -79,7 +81,7 @@ class AnnealingSoftmaxTest(MonteCarloTest):
 
 class ThompsonBanditTest(MonteCarloTest):
 
-    true_arm_probs = dict(green=0.2, red=0.2, blue=0.93)
+    true_arm_probs = dict(green=0.19, red=0.29, blue=0.35)
 
     def test_bandit(self):
         results = self.run_algo(makeBandit('ThompsonBandit'), 3000, 250)
