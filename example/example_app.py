@@ -1,5 +1,5 @@
-from flask.ext.mab.storage import JSONBanditStorage
-from flask.ext.mab.bandits import EpsilonGreedyBandit, AnnealingSoftmaxBandit, ThompsonBandit
+from flask_mab.storage import JSONBanditStorage
+from flask_mab.bandits import EpsilonGreedyBandit, AnnealingSoftmaxBandit
 
 color_bandit = EpsilonGreedyBandit(0.9)
 color_bandit.add_arm("green","green")
@@ -12,7 +12,7 @@ txt_bandit.add_arm("neutral","Add to cart")
 txt_bandit.add_arm("formal","Good day sir... care to purchase?")
 
 from flask import Flask,render_template
-from flask.ext.mab import BanditMiddleware,choose_arm,reward_endpt
+from flask_mab import BanditMiddleware,choose_arm,reward_endpt
 
 app = Flask('test_app',template_folder="./example/templates",static_folder="./example/static")
 app.config['MAB_STORAGE_ENGINE'] = 'JSONBanditStorage'
