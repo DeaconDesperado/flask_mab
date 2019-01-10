@@ -1,4 +1,6 @@
 class Mab(object):
+    """State object for mab extension
+    """
     def __init__(self, app):
         self.bandits = {}
         self.reward_endpts = []
