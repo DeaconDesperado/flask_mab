@@ -8,7 +8,7 @@ from flask_mab.bandits import EpsilonGreedyBandit
 
 from werkzeug.http import parse_cookie
 import json
-from test_utils import makeBandit
+from utils import makeBandit
 from random import choice
 
 class MABTestCase(unittest.TestCase):
@@ -53,7 +53,7 @@ class MABTestCase(unittest.TestCase):
 
     def test_routing(self):
         rv = self.app_client.get("/")
-        assert "Hello" in rv.data
+        assert "Hello".encode() in rv.data
 
     def test_suggest_decorated(self):
         self.app.debug_headers = True
@@ -92,7 +92,7 @@ class MABTestCase(unittest.TestCase):
 
     def test_repeating_session(self):
         first_req = self.app_client.get("/show_btn_decorated")
-        for i in xrange(30):
+        for i in range(30):
             req = self.app_client.get("/show_btn_decorated")
             assert req.headers['X-MAB-Debug'].split(';')[0].strip() == 'SAVED'
 

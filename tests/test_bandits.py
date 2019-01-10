@@ -1,5 +1,5 @@
 import unittest
-from tests.test_utils import makeBandit
+from utils import makeBandit
 import random
 import sys
 from collections import Counter

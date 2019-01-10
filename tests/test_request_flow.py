@@ -9,7 +9,7 @@ from flask_mab.bandits import EpsilonGreedyBandit
 
 from werkzeug.http import parse_cookie
 import json
-from test_utils import makeBandit
+from utils import makeBandit
 
 class RequestFlowTest(unittest.TestCase):
 
@@ -46,7 +46,6 @@ class RequestFlowTest(unittest.TestCase):
     def test_reward_is_called(self):
         self.bandit.reward_arm = Mock()
         self.app_client.get('/show_btn_decorated')
-        print self.app_client.cookie_jar
         self.app_client.get('/reward_decorated')
         self.bandit.reward_arm.assert_called_with(ANY, 1.0)
 
