@@ -10,7 +10,7 @@ class Bandit(object):
 
     @classmethod
     def fromdict(cls, dict_spec):
-        extra_args = dict([(key, value) for key, value in dict_spec.items() if key not in ["arms", "pulls", "reward", "values", "bandit_type"]])
+        extra_args = dict([(key, value) for key, value in dict_spec.items() if key not in ["arms", "pulls", "reward", "values", "bandit_type", "confidence"]])
 
         bandit = globals()[dict_spec["bandit_type"]](**extra_args)
         bandit.arms = dict_spec["arms"]
@@ -46,7 +46,7 @@ class Bandit(object):
         self._update(ind, reward)
 
     def _update(self, arm_index, reward):
-        n = self.pulls[arm_index]
+        n = max(1, self.pulls[arm_index])
         current = self.confidence[arm_index]
         self.confidence[arm_index] = ((n - 1) / float(n)) * current + (1 / float(n)) * reward
 
