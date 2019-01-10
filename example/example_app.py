@@ -1,5 +1,5 @@
 from flask_mab.storage import JSONBanditStorage
-from flask_mab.bandits import EpsilonGreedyBandit, AnnealingSoftmaxBandit
+from flask_mab.bandits import EpsilonGreedyBandit, AnnealingSoftmaxBandit, ThompsonBandit
 
 color_bandit = EpsilonGreedyBandit(0.9)
 color_bandit.add_arm("green","green")
