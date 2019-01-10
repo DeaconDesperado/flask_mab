@@ -40,7 +40,6 @@ class MABTestCase(unittest.TestCase):
 
         rv = app_client.get("/")
         assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
-        print parse_cookie(rv.headers["Set-Cookie"])["MAB"]
 
         assert "X-MAB-Debug" in rv.headers.keys()
         chosen_arm = self.get_arm(rv.headers)["some_bandit"]

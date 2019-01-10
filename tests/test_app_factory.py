@@ -65,7 +65,6 @@ class MABTestCase(unittest.TestCase):
         assert json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])[self.name_to_test] == chosen_arm
 
     def test_from_cookie(self):
-        print self.name_to_test
         first_req = self.app_client.get("/show_btn_decorated")
         assert "X-MAB-Debug" in first_req.headers.keys()
         chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])[self.name_to_test]
