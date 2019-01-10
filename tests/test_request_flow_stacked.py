@@ -8,7 +8,7 @@ import flask_mab.storage
 
 from werkzeug.http import parse_cookie
 import json
-from test_utils import makeBandit
+from utils import makeBandit
 
 class RequestFlowTest(unittest.TestCase):
 

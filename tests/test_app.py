@@ -8,11 +8,11 @@ from flask_mab.bandits import EpsilonGreedyBandit
 
 from werkzeug.http import parse_cookie
 import json
-from test_utils import makeBandit
+from utils import makeBandit
 from threading import Thread
 from multiprocessing import Pool
 from copy import copy
-from Queue import Queue
+from queue import Queue
 
 class MABTestCase(unittest.TestCase):
 
@@ -43,7 +43,7 @@ class MABTestCase(unittest.TestCase):
 
     def test_routing(self):
         rv = self.app_client.get("/")
-        assert "Hello" in rv.data
+        assert "Hello".encode() in rv.data
 
     def test_suggest_decorated(self):
         rv = self.app_client.get("/show_btn_decorated")
@@ -73,7 +73,7 @@ class MABTestCase(unittest.TestCase):
 
     def test_repeating_session(self):
         first_req = self.app_client.get("/show_btn_decorated")
-        for i in xrange(30):
+        for i in range(30):
             req = self.app_client.get("/show_btn_decorated")
             assert req.headers['X-MAB-Debug'].split(';')[0].strip() == 'SAVED'
 
@@ -90,7 +90,7 @@ class MABTestCase(unittest.TestCase):
                 first_req = client.get("/show_btn_decorated")
                 chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])["color_button"]
                 assert first_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
-                for i in xrange(400):
+                for i in range(400):
                     req = client.get("/show_btn_decorated")
                     #TODO: refactor this to regex
                     assert req.headers['X-MAB-Debug'].split(';')[1].split(':')[1] == chosen_arm
@@ -99,12 +99,12 @@ class MABTestCase(unittest.TestCase):
                 final_req = client.get("/show_btn_decorated")
                 assert final_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
                 q.put(True)
-            except AssertionError,e:
+            except AssertionError(e):
                 q.put(e)
 
         jobs = []
         q = Queue()
-        for i in xrange(4):
+        for i in range(4):
             jobs.append(Thread(target=request_worker, args=(self,i,q)))
 
         map(lambda x: x.start(), jobs)

@@ -8,7 +8,7 @@ from flask_mab.bandits import EpsilonGreedyBandit
 
 from werkzeug.http import parse_cookie
 import json
-from test_utils import makeBandit
+from utils import makeBandit
 
 #TODO: write tests per http://stackoverflow.com/a/11027030/215608
 
@@ -40,7 +40,6 @@ class MABTestCase(unittest.TestCase):
 
         rv = app_client.get("/")
         assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
-        print parse_cookie(rv.headers["Set-Cookie"])["MAB"]
 
         assert "X-MAB-Debug" in rv.headers.keys()
         chosen_arm = self.get_arm(rv.headers)["some_bandit"]

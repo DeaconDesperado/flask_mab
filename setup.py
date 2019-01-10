@@ -9,7 +9,7 @@ from setuptools import setup
 
 setup(
     name='Flask-MAB',
-    version='1.1.1',
+    version='2.0.0',
     url='http://github.com/deacondesperado/flask_mab',
     license='BSD',
     author='Mark Grey',
@@ -21,14 +21,19 @@ setup(
     include_package_data=True,
     platforms='any',
     install_requires=[
-        'Flask'
+        'Flask>=1.0.2',
+        'flask-debugtoolbar==0.10.1',
+        'future==0.17.1'
     ],
     setup_requires = [
-        'nose>=1.2.0',
+        'future>=0.17.1',
         'coverage>=3.7.0',
-        'mock>=1.0.0'
+        'mock>=1.0.0',
+        'pytest-runner'
     ],
-    test_suite='nose.collector',
+    tests_requires=[
+        'pytest'
+    ],
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',

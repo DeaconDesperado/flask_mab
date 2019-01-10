@@ -13,8 +13,9 @@
 from flask import current_app, g, request
 import json
 import flask_mab.storage
+from flask_mab.mab import Mab
 import types
-from bunch import Bunch
+from collections import namedtuple
 from flask import _request_ctx_stack
 from functools import wraps
 
@@ -23,7 +24,7 @@ try:
 except ImportError:
     from flask import _request_ctx_stack as stack
 
-__version__ = "1.1.1"
+__version__ = "2.0.0"
 
 def choose_arm(bandit):
     """Route decorator for registering an impression conveinently
@@ -108,7 +109,7 @@ class BanditMiddleware(object):
         app.config.setdefault('MAB_DEBUG_HEADERS', True)
         if not hasattr(app, 'extensions'):
             app.extensions = {}
-        app.extensions['mab'] = Bunch()
+        app.extensions['mab'] = Mab(app)
         self._register_storage(app)
         if hasattr(app, 'teardown_appcontext'):
             app.teardown_appcontext(self.teardown)
