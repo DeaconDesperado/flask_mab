@@ -152,7 +152,7 @@ class NaiveStochasticBandit(Bandit):
 
 class SoftmaxBandit(NaiveStochasticBandit):
 
-    def __init__(self, tau=1.0):
+    def __init__(self, tau=0.1):
         super(SoftmaxBandit, self).__init__()
         self.tau = tau
 
@@ -166,9 +166,9 @@ class SoftmaxBandit(NaiveStochasticBandit):
 
 class AnnealingSoftmaxBandit(SoftmaxBandit):
 
-    def __init__(self, tau=0):
+    def __init__(self):
         super(AnnealingSoftmaxBandit, self).__init__()
-        self.tau = tau
+        self.tau = 1
 
     def _compute_weights(self):
         t = sum(self.pulls) + 1
