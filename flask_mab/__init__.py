@@ -173,7 +173,8 @@ class BanditMiddleware(object):
 
             response.set_cookie(
                     app.extensions['mab'].cookie_name,
-                    json.dumps(request.bandits))
+                    json.dumps(request.bandits),
+                    secure=True, httponly=True, samesite='Lax')
             return response
 
         @app.after_request
