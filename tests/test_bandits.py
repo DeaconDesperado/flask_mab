@@ -1,6 +1,6 @@
 from __future__ import division
 import unittest
-from utils import makeBandit
+from utils import make_bandit
 import random
 import sys
 from collections import Counter
@@ -63,7 +63,7 @@ class EpsilonGreedyTest(MonteCarloTest):
     true_arm_probs = dict(green=0.9, blue=0.1, red=0.1)
 
     def test_bandit(self):
-        results = self.run_algo(makeBandit(self.bandit_name, epsilon=0.1), 4000, 250)
+        results = self.run_algo(make_bandit(self.bandit_name, epsilon=0.1), 4000, 250)
         data = Counter(results[2])
         picks = data.most_common(3)
         assert self.percentage_picked(picks, 'green') > 0.75
@@ -74,7 +74,7 @@ class SoftmaxTest(MonteCarloTest):
     true_arm_probs = dict(green=0.02, red=0.02, blue=0.93)
 
     def test_bandit(self):
-        results = self.run_algo(makeBandit('SoftmaxBandit', tau=0.1), 3, 10000)
+        results = self.run_algo(make_bandit('SoftmaxBandit', tau=0.1), 3, 10000)
         data = Counter(results[2])
         picks = data.most_common(3)
         assert self.percentage_picked(picks, 'blue') > 0.5
@@ -84,7 +84,7 @@ class AnnealingSoftmaxTest(MonteCarloTest):
     true_arm_probs = dict(green=0.1, red=0.1, blue=0.93)
 
     def test_bandit(self):
-        results = self.run_algo(makeBandit('AnnealingSoftmaxBandit'), 3, 10000)
+        results = self.run_algo(make_bandit('AnnealingSoftmaxBandit'), 3, 10000)
         data = Counter(results[2])
         picks = data.most_common(3)
         assert self.percentage_picked(picks, 'blue') > 0.4
@@ -94,7 +94,7 @@ class ThompsonBanditTest(MonteCarloTest):
     true_arm_probs = dict(green=0.19, red=0.29, blue=0.75)
 
     def test_bandit(self):
-        results = self.run_algo(makeBandit('ThompsonBandit'), 10, 15000)
+        results = self.run_algo(make_bandit('ThompsonBandit'), 10, 15000)
         data = Counter(results[2])
         picks = data.most_common(3)
         assert self.percentage_picked(picks, 'blue') > 0.7

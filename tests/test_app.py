@@ -8,7 +8,7 @@ from flask_mab.bandits import EpsilonGreedyBandit
 
 from werkzeug.http import parse_cookie
 import json
-from utils import makeBandit
+from utils import make_bandit
 from threading import Thread
 from multiprocessing import Pool
 from copy import copy
@@ -20,7 +20,7 @@ class MABTestCase(unittest.TestCase):
         banditStorage = flask_mab.storage.JSONBanditStorage('./bandits.json')
         app = flask.Flask('test_app')
         flask_mab.BanditMiddleware(app)
-        app.add_bandit('color_button',makeBandit("EpsilonGreedyBandit",epsilon=0.1))
+        app.add_bandit('color_button',make_bandit("EpsilonGreedyBandit",epsilon=0.1))
         app.debug = True
 
         @app.route("/")

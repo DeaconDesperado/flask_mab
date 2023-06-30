@@ -8,15 +8,15 @@ import flask_mab.storage
 
 from werkzeug.http import parse_cookie
 import json
-from utils import makeBandit
+from utils import make_bandit
 
 class RequestFlowTest(unittest.TestCase):
 
     def setUp(self):
         app = flask.Flask('test_app')
         flask_mab.BanditMiddleware(app)
-        self.bandit_a = makeBandit("EpsilonGreedyBandit",epsilon=1.0)
-        self.bandit_b = makeBandit("NaiveStochasticBandit")
+        self.bandit_a = make_bandit("EpsilonGreedyBandit",epsilon=1.0)
+        self.bandit_b = make_bandit("NaiveStochasticBandit")
         app.add_bandit('color_button', self.bandit_a)
         app.add_bandit('color_bg', self.bandit_b)
         app.debug = True

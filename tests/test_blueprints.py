@@ -8,7 +8,7 @@ from flask_mab.bandits import EpsilonGreedyBandit
 
 from werkzeug.http import parse_cookie
 import json
-from utils import makeBandit
+from utils import make_bandit
 
 #TODO: write tests per http://stackoverflow.com/a/11027030/215608
 
@@ -34,7 +34,7 @@ class MABTestCase(unittest.TestCase):
         app = flask.Flask(__name__)
         BanditMiddleware().init_app(app)
 
-        app.add_bandit("some_bandit",makeBandit("EpsilonGreedyBandit", epsilon=1.0))
+        app.add_bandit("some_bandit",make_bandit("EpsilonGreedyBandit", epsilon=1.0))
         app.register_blueprint(self.bp)
         app_client = app.test_client()
 

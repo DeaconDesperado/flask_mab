@@ -9,14 +9,14 @@ from flask_mab.bandits import EpsilonGreedyBandit
 
 from werkzeug.http import parse_cookie
 import json
-from utils import makeBandit
+from utils import make_bandit
 
 class RequestFlowTest(unittest.TestCase):
 
     def setUp(self):
         app = flask.Flask('test_app')
         flask_mab.BanditMiddleware(app)
-        self.bandit = makeBandit("EpsilonGreedyBandit",epsilon=1.0)
+        self.bandit = make_bandit("EpsilonGreedyBandit",epsilon=1.0)
         app.add_bandit('color_button', self.bandit)
         app.debug = True
 

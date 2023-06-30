@@ -8,7 +8,7 @@ from flask_mab.bandits import EpsilonGreedyBandit
 
 from werkzeug.http import parse_cookie
 import json
-from utils import makeBandit
+from utils import make_bandit
 from random import choice
 
 class MABTestCase(unittest.TestCase):
@@ -19,8 +19,8 @@ class MABTestCase(unittest.TestCase):
         """
 
         bandit_setups = {
-            "test_app" :  [('color_button', makeBandit("EpsilonGreedyBandit",epsilon=0.1))],
-            "some_other_app": [('bg_image', makeBandit("EpsilonGreedyBandit",epsilon=0.1))]
+            "test_app" :  [('color_button', make_bandit("EpsilonGreedyBandit",epsilon=0.1))],
+            "some_other_app": [('bg_image', make_bandit("EpsilonGreedyBandit",epsilon=0.1))]
         }
 
         setup = bandit_setups.get(app.import_name, [])
