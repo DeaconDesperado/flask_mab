@@ -1,4 +1,0 @@
-Flask==1.0.2
-flask-debugtoolbar==0.10.1
-future==0.17.1
-pytest
