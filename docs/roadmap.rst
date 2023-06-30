@@ -4,6 +4,14 @@ Changelog/Roadmap
 Changelog
 ------------
 
+3.0.1
+~~~~~
+* Support for Flask 2.x 
+
+2.0.1
+~~~~~
+* Support for app factory pattern 
+
 1.1.1
 ~~~~~
 * Moved references to storage off app instance
