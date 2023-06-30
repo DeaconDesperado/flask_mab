@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Flask-MAB"
-version = "2.0.1"
+version = "3.0.0"
 authors = [
   {name = "Mark Grey", email = "mark.asperia@gmail.com"}
 ]
@@ -12,7 +12,7 @@ description = "Multi-armed bandits for flask"
 readme = "README.rst"
 requires-python = ">=3.5" 
 dependencies = [
-  "Flask>=2.0.2",
+  "Flask>=2.2.5",
   "flask-debugtoolbar==0.13.1",
 ]
 classifiers = [
@@ -31,7 +31,8 @@ dev = [
   "pytest==7.4.0",
   "mock==5.0.2",
   "sphinx-pyproject==0.1.0",
-  "sphinx==7.0.1"
+  "sphinx==7.0.1",
+  "Pallets-Sphinx-Themes==2.1.1"
 ]
 
 [tool.sphinx-pyproject]
@@ -43,9 +44,9 @@ package_root = "flask_mab"
 language = "en"
 extensions = [
   "sphinx.ext.autodoc",
-  "sphinx.ext.viewcode"
+  "sphinx.ext.viewcode",
+  "pallets_sphinx_themes"
 ]
 templates_path = [ "_templates",]
 source_suffix = ".rst"
-html_theme_path = ["_themes",]
-html_theme = 'flask_small'
+html_theme = 'flask'

@@ -15,7 +15,5 @@ from sphinx_pyproject import SphinxConfig
 config = SphinxConfig("../pyproject.toml", globalns=globals())
 
 html_theme_options = {
-    'index_logo': 'flask_mab.png',
-    'index_logo_height': "200px",
-    'github_fork': 'deacondesperado/flask_mab',
+    'index_sidebar_logo': True 
 }
