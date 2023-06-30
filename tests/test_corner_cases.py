@@ -8,10 +8,11 @@ from flask_mab.bandits import EpsilonGreedyBandit
 
 import json
 
-class MABCornerCases(unittest.TestCase):
 
+class MABCornerCases(unittest.TestCase):
     def test_no_storage(self):
         pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

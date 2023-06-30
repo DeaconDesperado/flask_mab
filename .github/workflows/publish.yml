@@ -1,0 +1,43 @@
+name: publish
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  release:
+    types:
+      - published
+jobs:
+  pypi-publish:
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/flask_mab
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+      - name: Set up build deps
+        run: python -m pip install --upgrade build
+      - name: Install dependencies
+        run: python -m pip install '.[dev]'
+      - name: Lint
+        run: python -m black --check flask_mab tests
+      - name: Run tests
+        run: pytest
+      - name: Build dist
+        run: python -m build .
+      - name: Build docs
+        uses: ammaraskar/sphinx-action@0.4
+        with:
+          pre-build-command: python -m pip install '.[dev]'
+          docs-folder: "docs/"
+          build-command: sphinx-build -b html . _build
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
