@@ -3,7 +3,8 @@ from flask_debugtoolbar.panels import DebugPanel
 from jinja2 import PackageLoader, ChoiceLoader
 import json
 
-package_loader = PackageLoader('flask_mab', 'templates')
+package_loader = PackageLoader("flask_mab", "templates")
+
 
 def _maybe_patch_jinja_loader(jinja_env):
     """Patch the jinja_env loader to include
@@ -14,8 +15,8 @@ def _maybe_patch_jinja_loader(jinja_env):
     elif package_loader not in jinja_env.loader.loaders:
         jinja_env.loader.loaders.append(package_loader)
 
-class BanditDebugPanel(DebugPanel):
 
+class BanditDebugPanel(DebugPanel):
     name = "Multi-Armed Bandit"
     has_content = True
 
@@ -30,16 +31,18 @@ class BanditDebugPanel(DebugPanel):
         return "Multi-Armed Bandit"
 
     def url(self):
-        return ''
+        return ""
 
     def process_request(self, request):
-        self.raw_cookie = request.cookies.get(current_app.extensions['mab'].cookie_name, '{}')
+        self.raw_cookie = request.cookies.get(
+            current_app.extensions["mab"].cookie_name, "{}"
+        )
 
     def content(self):
         context = self.context.copy()
-        context['cookie_name'] = current_app.extensions['mab'].cookie_name
-        context['raw_cookie'] = self.raw_cookie
-        context['storage_engine'] = current_app.config.get("MAB_STORAGE_ENGINE")
-        context['storage_opts'] = current_app.config.get('MAB_STORAGE_OPTS', tuple())
-        context['bandits'] = current_app.extensions['mab'].bandits.items()
-        return self.render('panels/mab-panel.html', context)
+        context["cookie_name"] = current_app.extensions["mab"].cookie_name
+        context["raw_cookie"] = self.raw_cookie
+        context["storage_engine"] = current_app.config.get("MAB_STORAGE_ENGINE")
+        context["storage_opts"] = current_app.config.get("MAB_STORAGE_OPTS", tuple())
+        context["bandits"] = current_app.extensions["mab"].bandits.items()
+        return self.render("panels/mab-panel.html", context)
