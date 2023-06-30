@@ -5,6 +5,7 @@ import random
 import sys
 from collections import Counter
 
+
 class MonteCarloTest(unittest.TestCase):
     """Tests to ensure that over many iterations, a winner
     eventually converges"""
@@ -31,9 +32,9 @@ class MonteCarloTest(unittest.TestCase):
                 times[index] = t
 
                 chosen_arm = bandit.suggest_arm()
-                chosen_arms[index] = chosen_arm['id']
-                bandit.pull_arm(chosen_arm['id'])
-                reward = self.draw(chosen_arm['id'])
+                chosen_arms[index] = chosen_arm["id"]
+                bandit.pull_arm(chosen_arm["id"])
+                reward = self.draw(chosen_arm["id"])
                 rewards[index] = reward
 
                 if t == 1:
@@ -42,13 +43,15 @@ class MonteCarloTest(unittest.TestCase):
                     cumulative_rewards[index] = cumulative_rewards[index - 1] + reward
 
                 if reward:
-                    bandit.reward_arm(chosen_arm['id'], reward)
+                    bandit.reward_arm(chosen_arm["id"], reward)
 
         return [sim_nums, times, chosen_arms, rewards, cumulative_rewards]
 
     def save_results(self, results, output_stream):
         for sim in range(len(results[0])):
-            output_stream.write("  ".join([str(results[j][sim]) for j in range(len(results))]) + "\n")
+            output_stream.write(
+                "  ".join([str(results[j][sim]) for j in range(len(results))]) + "\n"
+            )
             sys.stdout.flush()
 
     def percentage_picked(self, picks, winner):
@@ -58,43 +61,41 @@ class MonteCarloTest(unittest.TestCase):
 
 
 class EpsilonGreedyTest(MonteCarloTest):
-
-    bandit_name = 'EpsilonGreedyBandit'
+    bandit_name = "EpsilonGreedyBandit"
     true_arm_probs = dict(green=0.9, blue=0.1, red=0.1)
 
     def test_bandit(self):
         results = self.run_algo(make_bandit(self.bandit_name, epsilon=0.1), 4000, 250)
         data = Counter(results[2])
         picks = data.most_common(3)
-        assert self.percentage_picked(picks, 'green') > 0.75
+        assert self.percentage_picked(picks, "green") > 0.75
 
 
 class SoftmaxTest(MonteCarloTest):
-
     true_arm_probs = dict(green=0.02, red=0.02, blue=0.93)
 
     def test_bandit(self):
-        results = self.run_algo(make_bandit('SoftmaxBandit', tau=0.1), 3, 10000)
+        results = self.run_algo(make_bandit("SoftmaxBandit", tau=0.1), 3, 10000)
         data = Counter(results[2])
         picks = data.most_common(3)
-        assert self.percentage_picked(picks, 'blue') > 0.5
+        assert self.percentage_picked(picks, "blue") > 0.5
+
 
 class AnnealingSoftmaxTest(MonteCarloTest):
-
     true_arm_probs = dict(green=0.1, red=0.1, blue=0.93)
 
     def test_bandit(self):
-        results = self.run_algo(make_bandit('AnnealingSoftmaxBandit'), 3, 10000)
+        results = self.run_algo(make_bandit("AnnealingSoftmaxBandit"), 3, 10000)
         data = Counter(results[2])
         picks = data.most_common(3)
-        assert self.percentage_picked(picks, 'blue') > 0.4
+        assert self.percentage_picked(picks, "blue") > 0.4
+
 
 class ThompsonBanditTest(MonteCarloTest):
-
     true_arm_probs = dict(green=0.19, red=0.29, blue=0.75)
 
     def test_bandit(self):
-        results = self.run_algo(make_bandit('ThompsonBandit'), 10, 15000)
+        results = self.run_algo(make_bandit("ThompsonBandit"), 10, 15000)
         data = Counter(results[2])
         picks = data.most_common(3)
-        assert self.percentage_picked(picks, 'blue') > 0.7
+        assert self.percentage_picked(picks, "blue") > 0.7

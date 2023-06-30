@@ -2,7 +2,7 @@ import unittest
 import os
 import flask
 
-from flask_mab import BanditMiddleware,add_bandit,choose_arm,reward_endpt
+from flask_mab import BanditMiddleware, add_bandit, choose_arm, reward_endpt
 import flask_mab.storage
 from flask_mab.bandits import EpsilonGreedyBandit
 
@@ -11,28 +11,32 @@ import json
 from utils import make_bandit
 from random import choice
 
-class MABTestCase(unittest.TestCase):
 
+class MABTestCase(unittest.TestCase):
     def banditFactory(self, app):
         """Use a dictionary to look for different app setups.  Key is element name,
         list of tuples represent bandits (name, banditObj)
         """
 
         bandit_setups = {
-            "test_app" :  [('color_button', make_bandit("EpsilonGreedyBandit",epsilon=0.1))],
-            "some_other_app": [('bg_image', make_bandit("EpsilonGreedyBandit",epsilon=0.1))]
+            "test_app": [
+                ("color_button", make_bandit("EpsilonGreedyBandit", epsilon=0.1))
+            ],
+            "some_other_app": [
+                ("bg_image", make_bandit("EpsilonGreedyBandit", epsilon=0.1))
+            ],
         }
 
         setup = bandit_setups.get(app.import_name, [])
         return setup.pop()
 
     def setUp(self):
-        app = flask.Flask(choice(['test_app', 'some_other_app']))
+        app = flask.Flask(choice(["test_app", "some_other_app"]))
         BanditMiddleware().init_app(app)
         app.debug = True
-        name,bandit = self.banditFactory(app)
+        name, bandit = self.banditFactory(app)
         self.name_to_test = name
-        app.add_bandit(name,bandit)
+        app.add_bandit(name, bandit)
 
         @app.route("/")
         def root():
@@ -44,7 +48,7 @@ class MABTestCase(unittest.TestCase):
             return flask.make_response("assigned an arm")
 
         @app.route("/reward_decorated")
-        @reward_endpt(self.name_to_test,1.0)
+        @reward_endpt(self.name_to_test, 1.0)
         def reward_decorated():
             return flask.make_response("awarded the arm")
 
@@ -61,47 +65,64 @@ class MABTestCase(unittest.TestCase):
         assert parse_cookie(rv.headers["Set-Cookie"])["MAB"]
         assert "X-MAB-Debug" in rv.headers.keys()
         chosen_arm = self.get_arm(rv.headers)[self.name_to_test]
-        assert self.app.extensions['mab'].bandits[self.name_to_test][chosen_arm]["pulls"] > 0
-        assert json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])[self.name_to_test] == chosen_arm
+        assert (
+            self.app.extensions["mab"].bandits[self.name_to_test][chosen_arm]["pulls"]
+            > 0
+        )
+        assert (
+            json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])[self.name_to_test]
+            == chosen_arm
+        )
 
     def test_from_cookie(self):
         first_req = self.app_client.get("/show_btn_decorated")
         assert "X-MAB-Debug" in first_req.headers.keys()
-        chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])[self.name_to_test]
+        chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])[
+            self.name_to_test
+        ]
         self.app_client.get("/reward_decorated")
-        assert self.app.extensions['mab'].bandits[self.name_to_test][chosen_arm]["reward"] > 0
+        assert (
+            self.app.extensions["mab"].bandits[self.name_to_test][chosen_arm]["reward"]
+            > 0
+        )
 
     def test_from_cookie_reward_decorated(self):
         first_req = self.app_client.get("/show_btn_decorated")
         assert "X-MAB-Debug" in first_req.headers.keys()
-        chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])[self.name_to_test]
+        chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])[
+            self.name_to_test
+        ]
         self.app_client.get("/reward_decorated")
-        assert self.app.extensions['mab'].bandits[self.name_to_test][chosen_arm]["reward"] > 0
+        assert (
+            self.app.extensions["mab"].bandits[self.name_to_test][chosen_arm]["reward"]
+            > 0
+        )
 
-    def get_arm(self,headers):
-        key_vals = [h.strip() for h in headers["X-MAB-Debug"].split(';')[1:]]
+    def get_arm(self, headers):
+        key_vals = [h.strip() for h in headers["X-MAB-Debug"].split(";")[1:]]
         return dict([tuple(tup.split(":")) for tup in key_vals])
 
     def test_new_session(self):
-        self.app_client.set_cookie('MAB', '', max_age=0)
+        self.app_client.set_cookie("MAB", "", max_age=0)
         first_req = self.app_client.get("/show_btn_decorated")
-        assert first_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
-        self.app_client.set_cookie('MAB', '', max_age=0)
+        assert first_req.headers["X-MAB-Debug"].split(";")[0].strip() == "STORE"
+        self.app_client.set_cookie("MAB", "", max_age=0)
         second_req = self.app_client.get("/show_btn_decorated")
-        assert second_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
+        assert second_req.headers["X-MAB-Debug"].split(";")[0].strip() == "STORE"
 
     def test_repeating_session(self):
         first_req = self.app_client.get("/show_btn_decorated")
         for i in range(30):
             req = self.app_client.get("/show_btn_decorated")
-            assert req.headers['X-MAB-Debug'].split(';')[0].strip() == 'SAVED'
+            assert req.headers["X-MAB-Debug"].split(";")[0].strip() == "SAVED"
 
     def test_concurrency(self):
         """Test that concurrent clients do not get confused
         bandit arms
         """
 
-        self.app.extensions['mab'].bandit_storage.flush()
+        self.app.extensions["mab"].bandit_storage.flush()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
