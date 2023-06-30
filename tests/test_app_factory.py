@@ -83,10 +83,10 @@ class MABTestCase(unittest.TestCase):
         return dict([tuple(tup.split(":")) for tup in key_vals])
 
     def test_new_session(self):
-        self.app_client.cookie_jar.clear()
+        self.app_client.set_cookie('MAB', '', max_age=0)
         first_req = self.app_client.get("/show_btn_decorated")
         assert first_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
-        self.app_client.cookie_jar.clear()
+        self.app_client.set_cookie('MAB', '', max_age=0)
         second_req = self.app_client.get("/show_btn_decorated")
         assert second_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
 

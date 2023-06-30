@@ -67,7 +67,7 @@ class MABTestCase(unittest.TestCase):
     def test_new_session(self):
         first_req = self.app_client.get("/show_btn_decorated")
         assert first_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
-        self.app_client.cookie_jar.clear()
+        self.app_client.set_cookie('MAB', 'x', max_age=0)
         second_req = self.app_client.get("/show_btn_decorated")
         assert second_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
 
@@ -95,7 +95,7 @@ class MABTestCase(unittest.TestCase):
                     #TODO: refactor this to regex
                     assert req.headers['X-MAB-Debug'].split(';')[1].split(':')[1] == chosen_arm
                     assert req.headers['X-MAB-Debug'].split(';')[0].strip() == 'SAVED'
-                client.cookie_jar.clear()
+                self.app_client.set_cookie("MAB", 'x', max_age=0)
                 final_req = client.get("/show_btn_decorated")
                 assert final_req.headers['X-MAB-Debug'].split(';')[0].strip() == 'STORE'
                 q.put(True)
