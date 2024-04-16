@@ -32,7 +32,8 @@ dev = [
   "mock==5.0.2",
   "sphinx-pyproject==0.1.0",
   "sphinx==7.0.1",
-  "Pallets-Sphinx-Themes==2.1.1"
+  "Pallets-Sphinx-Themes==2.1.1",
+  "tox==4.14.2"
 ]
 
 [tool.sphinx-pyproject]
