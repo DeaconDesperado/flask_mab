@@ -70,7 +70,7 @@ class MABTestCase(unittest.TestCase):
             rv = app_client.get("/")
 
         with self.assertRaises(MABConfigException):
-            app_client.set_cookie("localhost", "MAB", '{"some_bandit": "blue"}')
+            app_client.set_cookie("MAB", '{"some_bandit": "blue"}', domain="localhost")
             app_client.get("/reward")
 
     def get_arm(self, headers):
