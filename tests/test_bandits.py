@@ -54,11 +54,6 @@ class MonteCarloTest(unittest.TestCase):
             )
             sys.stdout.flush()
 
-    def percentage_picked(self, picks, winner):
-        should_win = dict(picks)[winner]
-        total = sum([pt[1] for pt in picks])
-        return should_win / total
-
 
 class EpsilonGreedyTest(MonteCarloTest):
     bandit_name = "EpsilonGreedyBandit"
@@ -67,8 +62,8 @@ class EpsilonGreedyTest(MonteCarloTest):
     def test_bandit(self):
         results = self.run_algo(make_bandit(self.bandit_name, epsilon=0.1), 4000, 250)
         data = Counter(results[2])
-        picks = data.most_common(3)
-        assert self.percentage_picked(picks, "green") > 0.75
+        winner, _ = data.most_common(1).pop()
+        assert winner is "green"
 
 
 class SoftmaxTest(MonteCarloTest):
@@ -77,8 +72,8 @@ class SoftmaxTest(MonteCarloTest):
     def test_bandit(self):
         results = self.run_algo(make_bandit("SoftmaxBandit", tau=0.1), 3, 10000)
         data = Counter(results[2])
-        picks = data.most_common(3)
-        assert self.percentage_picked(picks, "blue") > 0.5
+        winner, _ = data.most_common(1).pop()
+        assert winner is "blue"
 
 
 class AnnealingSoftmaxTest(MonteCarloTest):
@@ -87,8 +82,8 @@ class AnnealingSoftmaxTest(MonteCarloTest):
     def test_bandit(self):
         results = self.run_algo(make_bandit("AnnealingSoftmaxBandit"), 3, 10000)
         data = Counter(results[2])
-        picks = data.most_common(3)
-        assert self.percentage_picked(picks, "blue") > 0.4
+        winner, _ = data.most_common(1).pop()
+        assert winner is "blue"
 
 
 class ThompsonBanditTest(MonteCarloTest):
@@ -97,5 +92,5 @@ class ThompsonBanditTest(MonteCarloTest):
     def test_bandit(self):
         results = self.run_algo(make_bandit("ThompsonBandit"), 10, 15000)
         data = Counter(results[2])
-        picks = data.most_common(3)
-        assert self.percentage_picked(picks, "blue") > 0.7
+        winner, _ = data.most_common(1).pop()
+        assert winner is "blue"

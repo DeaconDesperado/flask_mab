@@ -10,21 +10,15 @@
     :license: BSD, see LICENSE for more details.
 """
 
-from flask import current_app, g, request
+from flask import current_app, request
 import json
 import flask_mab.storage
 from flask_mab.mab import Mab
 import types
-from collections import namedtuple
-from flask import _request_ctx_stack
 from functools import wraps
 
-try:
-    from flask import _app_ctx_stack as stack
-except ImportError:
-    from flask import _request_ctx_stack as stack
 
-__version__ = "2.0.1"
+__version__ = "3.0.0"
 
 
 def choose_arm(bandit):
