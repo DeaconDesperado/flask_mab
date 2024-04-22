@@ -29,7 +29,7 @@ classifiers = [
 dev = [
   "black==23.3.0",
   "pytest==8.1.1",
-  "mock==5.0.2",
+  "mock==5.1.0",
   "sphinx-pyproject==0.1.0",
   "sphinx==7.0.1",
   "Pallets-Sphinx-Themes==2.1.1",
