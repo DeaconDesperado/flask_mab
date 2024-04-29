@@ -200,25 +200,31 @@ class AnnealingSoftmaxBandit(SoftmaxBandit):
 
 
 class ThompsonBandit(NaiveStochasticBandit):
+
+    MIN_DIST = 0.001
+    a = []
+    b = []
+
     def __init__(self, prior=(1.0, 1.0)):
         super(ThompsonBandit, self).__init__()
-        self.prior = prior
+
+    def add_arm(self, arm_id, value=None):
+        super(ThompsonBandit, self).add_arm(arm_id, value)
+        self.a.append(1.0)
+        self.b.append(1.0)
 
     def _compute_weights(self):
-        sampled_theta = []
-        for ind, n in enumerate(self.arms):
-            dist = betavariate(
-                self.prior[0] + self.reward[ind],
-                self.prior[1] + self.pulls[ind] - self.reward[ind],
-            )
-            sampled_theta += [dist]
-        return sampled_theta
+        beta_params = zip(self.a, self.b)
+        return [betavariate(i[0], i[1]) for i in beta_params]
 
     def suggest_arm(self):
-        weights = self._compute_weights()
+        weights = [w for w in self._compute_weights()]
         return self[self.arms[weights.index(max(weights))]]
 
     def reward_arm(self, arm_id, reward):
         if reward != 1.0:
             reward = 1.0
         super(ThompsonBandit, self).reward_arm(arm_id, reward)
+        ind = self.arms.index(arm_id)
+        self.a[ind] = self.a[ind] + reward
+        self.b[ind] = self.b[ind] + (1 - reward)
