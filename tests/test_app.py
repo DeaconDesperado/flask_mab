@@ -54,14 +54,14 @@ class MABTestCase(unittest.TestCase):
             self.app.extensions["mab"].bandits["color_button"][chosen_arm]["pulls"] > 0
         )
         assert (
-            json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["color_button"]
+            json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["color_button"][0]
             == chosen_arm
         )
 
     def test_from_cookie_reward_decorated(self):
         first_req = self.app_client.get("/show_btn_decorated")
         assert "X-MAB-Debug" in first_req.headers.keys()
-        chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])[
+        chosen_arm, _ = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])[
             "color_button"
         ]
         self.app_client.get("/reward_decorated")
@@ -97,7 +97,7 @@ class MABTestCase(unittest.TestCase):
             try:
                 client = test.app.test_client()
                 first_req = client.get("/show_btn_decorated")
-                chosen_arm = json.loads(
+                chosen_arm, _ = json.loads(
                     parse_cookie(first_req.headers["Set-Cookie"])["MAB"]
                 )["color_button"]
                 assert first_req.headers["X-MAB-Debug"].split(";")[0].strip() == "STORE"

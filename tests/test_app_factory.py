@@ -70,7 +70,7 @@ class MABTestCase(unittest.TestCase):
             > 0
         )
         assert (
-            json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])[self.name_to_test]
+            json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])[self.name_to_test][0]
             == chosen_arm
         )
 
@@ -79,7 +79,7 @@ class MABTestCase(unittest.TestCase):
         assert "X-MAB-Debug" in first_req.headers.keys()
         chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])[
             self.name_to_test
-        ]
+        ][0]
         self.app_client.get("/reward_decorated")
         assert (
             self.app.extensions["mab"].bandits[self.name_to_test][chosen_arm]["reward"]
@@ -91,7 +91,7 @@ class MABTestCase(unittest.TestCase):
         assert "X-MAB-Debug" in first_req.headers.keys()
         chosen_arm = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])[
             self.name_to_test
-        ]
+        ][0]
         self.app_client.get("/reward_decorated")
         assert (
             self.app.extensions["mab"].bandits[self.name_to_test][chosen_arm]["reward"]

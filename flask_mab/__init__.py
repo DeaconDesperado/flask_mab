@@ -71,7 +71,7 @@ def reward_endpt(bandit, reward_val=1):
             for bandit, reward_amt in func.rewards:
                 if bandit in request.bandits.keys():
                     request.bandits_reward.add(
-                        (bandit, request.bandits[bandit], reward_amt)
+                        (bandit, request.bandits[bandit][0], reward_amt)
                     )
             return func(*args, **kwargs)
 
@@ -163,13 +163,16 @@ class BanditMiddleware(object):
         @app.after_request
         def remember_bandit_arms(response):
             if request.bandits_save:
-                for bandit_id, arm in request.bandits.items():
+                for bandit_id, (arm, _), in request.bandits.items():
                     # hook event for saving an impression here
                     app.extensions["mab"].bandits[bandit_id].pull_arm(arm)
 
-            for bandit_id, arm, reward_amt in request.bandits_reward:
+            for bandit_id, arm, amt in request.bandits_reward:
                 try:
-                    app.extensions["mab"].bandits[bandit_id].reward_arm(arm, reward_amt)
+                    stored_arm, open = request.bandits[bandit_id]
+                    if open:
+                        app.extensions["mab"].bandits[bandit_id].reward_arm(arm, amt)
+                        request.bandits[bandit_id] = (arm, False)
                     # hook event for saving a reward line here
                 except KeyError:
                     raise MABConfigException("Bandit %s not found" % bandit_id)
@@ -187,11 +190,11 @@ class BanditMiddleware(object):
         def send_debug_header(response):
             if app.extensions["mab"].debug_headers and request.bandits_save:
                 response.headers["X-MAB-Debug"] = "STORE; " + ";".join(
-                    ["%s:%s" % (key, val) for key, val in request.bandits.items()]
+                    ["%s:%s" % (key, val[0]) for key, val in request.bandits.items()]
                 )
             elif app.extensions["mab"].debug_headers:
                 response.headers["X-MAB-Debug"] = "SAVED; " + ";".join(
-                    ["%s:%s" % (key, val) for key, val in request.bandits.items()]
+                    ["%s:%s" % (key, val[0]) for key, val in request.bandits.items()]
                 )
             return response
 
@@ -226,13 +229,13 @@ def suggest_arm_for(key):
     app = current_app
     try:
         # Try to get the selected bandits from cookie
-        arm = app.extensions["mab"].bandits[key][request.bandits[key]]
+        arm = app.extensions["mab"].bandits[key][request.bandits[key][0]]
         return arm["id"], arm["value"]
     except (AttributeError, TypeError, KeyError) as err:
         # Assign an arm for a new client
         try:
             arm = app.extensions["mab"].bandits[key].suggest_arm()
-            request.bandits[key] = arm["id"]
+            request.bandits[key] = (arm["id"], True)
             request.bandits_save = True
             return arm["id"], arm["value"]
         except KeyError:

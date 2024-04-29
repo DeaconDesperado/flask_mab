@@ -48,8 +48,8 @@ class RequestFlowTest(unittest.TestCase):
         self.bandit_b.pull_arm = Mock()
         req = self.app_client.get("/show_btn_decorated")
         chosen_arms = json.loads(parse_cookie(req.headers["Set-Cookie"])["MAB"])
-        self.bandit_a.pull_arm.assert_called_with(chosen_arms["color_button"])
-        self.bandit_b.pull_arm.assert_called_with(chosen_arms["color_bg"])
+        self.bandit_a.pull_arm.assert_called_with(chosen_arms["color_button"][0])
+        self.bandit_b.pull_arm.assert_called_with(chosen_arms["color_bg"][0])
 
     def test_reward_is_called(self):
         self.bandit_a.reward_arm = Mock()
@@ -57,8 +57,8 @@ class RequestFlowTest(unittest.TestCase):
         self.app_client.get("/show_btn_decorated")
         req = self.app_client.get("/reward_decorated")
         chosen_arms = json.loads(parse_cookie(req.headers["Set-Cookie"])["MAB"])
-        self.bandit_a.reward_arm.assert_called_with(chosen_arms["color_button"], 1.0)
-        self.bandit_b.reward_arm.assert_called_with(chosen_arms["color_bg"], 1.0)
+        self.bandit_a.reward_arm.assert_called_with(chosen_arms["color_button"][0], 1.0)
+        self.bandit_b.reward_arm.assert_called_with(chosen_arms["color_bg"][0], 1.0)
 
     def test_values_persisted(self):
         self.app.extensions["mab"].bandit_storage.save = Mock()
