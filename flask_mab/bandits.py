@@ -1,5 +1,5 @@
 from random import random, choice, uniform, betavariate
-from math import log, exp, expm1
+from math import log, exp
 
 
 class Bandit(object):
@@ -178,7 +178,7 @@ class SoftmaxBandit(NaiveStochasticBandit):
     def _compute_weights(self):
         weights = []
         total_reward = sum([exp(x / self.tau) for x in self.confidence])
-        for ind, n in enumerate(self.pulls):
+        for ind, _ in enumerate(self.pulls):
             weights.append(exp(self.confidence[ind] / self.tau) / total_reward)
         return weights
 

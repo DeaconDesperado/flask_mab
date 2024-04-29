@@ -1,4 +1,4 @@
-from flask import current_app
+from flask import current_app, request
 from flask_debugtoolbar.panels import DebugPanel
 from jinja2 import PackageLoader, ChoiceLoader
 import json
@@ -45,4 +45,5 @@ class BanditDebugPanel(DebugPanel):
         context["storage_engine"] = current_app.config.get("MAB_STORAGE_ENGINE")
         context["storage_opts"] = current_app.config.get("MAB_STORAGE_OPTS", tuple())
         context["bandits"] = current_app.extensions["mab"].bandits.items()
+        context["assigned"] = request.bandits
         return self.render("panels/mab-panel.html", context)
