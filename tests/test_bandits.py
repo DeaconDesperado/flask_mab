@@ -10,17 +10,19 @@ class MonteCarloTest(unittest.TestCase):
     """Tests to ensure that over many iterations, a winner
     eventually converges"""
 
+    true_arm_probs = {}
+
     def draw(self, arm_name):
         if random.random() > self.true_arm_probs[arm_name]:
             return 0.0
         return 1.0
 
     def run_algo(self, bandit, num_sims, horizon):
-        chosen_arms = [0.0 for i in range(num_sims * horizon)]
-        rewards = [0.0 for i in range(num_sims * horizon)]
-        cumulative_rewards = [0.0 for i in range(num_sims * horizon)]
-        sim_nums = [0.0 for i in range(num_sims * horizon)]
-        times = [0.0 for i in range(num_sims * horizon)]
+        chosen_arms = [0.0 for _ in range(num_sims * horizon)]
+        rewards = [0.0 for _ in range(num_sims * horizon)]
+        cumulative_rewards = [0.0 for _ in range(num_sims * horizon)]
+        sim_nums = [0.0 for _ in range(num_sims * horizon)]
+        times = [0.0 for _ in range(num_sims * horizon)]
 
         for sim in range(num_sims):
             sim = sim + 1
@@ -45,7 +47,7 @@ class MonteCarloTest(unittest.TestCase):
                 if reward:
                     bandit.reward_arm(chosen_arm["id"], reward)
 
-        return [sim_nums, times, chosen_arms, rewards, cumulative_rewards]
+        return (sim_nums, times, chosen_arms, rewards, cumulative_rewards)
 
     def save_results(self, results, output_stream):
         for sim in range(len(results[0])):
@@ -57,7 +59,7 @@ class MonteCarloTest(unittest.TestCase):
 
 class EpsilonGreedyTest(MonteCarloTest):
     bandit_name = "EpsilonGreedyBandit"
-    true_arm_probs = dict(green=0.9, blue=0.1, red=0.1)
+    true_arm_probs = dict(green=0.99, blue=0.01, red=0.01)
 
     def test_bandit(self):
         results = self.run_algo(make_bandit(self.bandit_name, epsilon=0.1), 4000, 250)
@@ -67,27 +69,27 @@ class EpsilonGreedyTest(MonteCarloTest):
 
 
 class SoftmaxTest(MonteCarloTest):
-    true_arm_probs = dict(green=0.02, red=0.02, blue=0.93)
+    true_arm_probs = dict(green=0.01, red=0.01, blue=0.98)
 
     def test_bandit(self):
-        results = self.run_algo(make_bandit("SoftmaxBandit", tau=0.1), 3, 10000)
+        results = self.run_algo(make_bandit("SoftmaxBandit", tau=0.1), 10, 10000)
         data = Counter(results[2])
         winner, _ = data.most_common(1).pop()
         assert winner is "blue"
 
 
 class AnnealingSoftmaxTest(MonteCarloTest):
-    true_arm_probs = dict(green=0.1, red=0.1, blue=0.93)
+    true_arm_probs = dict(green=0.01, red=0.01, blue=0.98)
 
     def test_bandit(self):
-        results = self.run_algo(make_bandit("AnnealingSoftmaxBandit"), 3, 10000)
+        results = self.run_algo(make_bandit("AnnealingSoftmaxBandit"), 10, 10000)
         data = Counter(results[2])
         winner, _ = data.most_common(1).pop()
         assert winner is "blue"
 
 
 class ThompsonBanditTest(MonteCarloTest):
-    true_arm_probs = dict(green=0.19, red=0.29, blue=0.75)
+    true_arm_probs = dict(green=0.01, red=0.01, blue=0.98)
 
     def test_bandit(self):
         results = self.run_algo(make_bandit("ThompsonBandit"), 10, 15000)
