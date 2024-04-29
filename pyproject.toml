@@ -10,7 +10,7 @@ authors = [
 ]
 description = "Multi-armed bandits for flask"
 readme = "README.rst"
-requires-python = ">=3.5" 
+requires-python = ">=3.8" 
 dependencies = [
   "Flask>=2.2.5",
   "flask-debugtoolbar==0.14.1",

@@ -56,16 +56,23 @@ class MonteCarloTest(unittest.TestCase):
             )
             sys.stdout.flush()
 
+    def assert_winner(self, results, expected):
+        data = Counter(results[2])
+        winner, _ = data.most_common(1).pop()
+        try:
+            assert winner is expected
+        except AssertionError as e:
+            self.save_results(results, sys.stdout)
+            raise e
+
 
 class EpsilonGreedyTest(MonteCarloTest):
     bandit_name = "EpsilonGreedyBandit"
     true_arm_probs = dict(green=0.99, blue=0.01, red=0.01)
 
     def test_bandit(self):
-        results = self.run_algo(make_bandit(self.bandit_name, epsilon=0.1), 4000, 250)
-        data = Counter(results[2])
-        winner, _ = data.most_common(1).pop()
-        assert winner is "green"
+        results = self.run_algo(make_bandit(self.bandit_name, epsilon=0.1), 10, 10000)
+        self.assert_winner(results, "green")
 
 
 class SoftmaxTest(MonteCarloTest):
@@ -73,9 +80,7 @@ class SoftmaxTest(MonteCarloTest):
 
     def test_bandit(self):
         results = self.run_algo(make_bandit("SoftmaxBandit", tau=0.1), 10, 10000)
-        data = Counter(results[2])
-        winner, _ = data.most_common(1).pop()
-        assert winner is "blue"
+        self.assert_winner(results, "blue")
 
 
 class AnnealingSoftmaxTest(MonteCarloTest):
@@ -83,9 +88,7 @@ class AnnealingSoftmaxTest(MonteCarloTest):
 
     def test_bandit(self):
         results = self.run_algo(make_bandit("AnnealingSoftmaxBandit"), 10, 10000)
-        data = Counter(results[2])
-        winner, _ = data.most_common(1).pop()
-        assert winner is "blue"
+        self.assert_winner(results, "blue")
 
 
 class ThompsonBanditTest(MonteCarloTest):
@@ -93,6 +96,4 @@ class ThompsonBanditTest(MonteCarloTest):
 
     def test_bandit(self):
         results = self.run_algo(make_bandit("ThompsonBandit"), 10, 15000)
-        data = Counter(results[2])
-        winner, _ = data.most_common(1).pop()
-        assert winner is "blue"
+        self.assert_winner(results, "blue")
