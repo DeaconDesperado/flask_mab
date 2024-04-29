@@ -70,7 +70,9 @@ class MABTestCase(unittest.TestCase):
             > 0
         )
         assert (
-            json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])[self.name_to_test][0]
+            json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])[
+                self.name_to_test
+            ][0]
             == chosen_arm
         )
 
