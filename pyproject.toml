@@ -31,7 +31,7 @@ dev = [
   "pytest==8.1.1",
   "mock==5.1.0",
   "sphinx-pyproject==0.3.0",
-  "sphinx==7.0.1",
+  "sphinx==7.3.7",
   "Pallets-Sphinx-Themes==2.1.2",
   "tox==4.15.0"
 ]
