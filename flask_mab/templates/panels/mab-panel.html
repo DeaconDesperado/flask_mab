@@ -29,6 +29,7 @@
 #flDebug .panelContent .mab-op-table,
 #flDebug .panelContent .mab-stack-trace table { display: table;}
 
+
 .mab-op-table td.fifty {width: 50%; word-wrap: break-word;}
 .mab-op-table td.thirty {width: 30%; word-wrap: break-word;}
 
@@ -62,7 +63,7 @@
 </table>
 
 {% for name,bandit in bandits %}
-    <h4>{{name}}:</h4>
+  <h4>{{name}}</h4>
     Green table rows are values for this request
     <table class="mab-op-table">
         <colgroup>
@@ -80,7 +81,14 @@
             </tr>
         </thead>
         {% for arm in bandit.arms %}
-            <tr id="bandit-{{name}}-{{arm}}" class="{{ loop.cycle('flDebugOdd', 'flDebugEven') }}">
+            <tr id="bandit-{{name}}-{{arm}}" 
+              {% if arm == assigned[name][0] %}
+              class="winner"
+              {% else %}
+              class="{{ loop.cycle('flDebugOdd', 'flDebugEven') }}"
+              {% endif %}
+              >
+
                 <td>{{ arm }}</td>
                 <td>{{bandit[arm]['pulls']}}</td>
                 <td>{{bandit[arm]['reward']}}</td>
@@ -89,21 +97,3 @@
         {% endfor %}
     </table>
 {% endfor %}
-
-<script type="text/javascript" src="/_debug_toolbar/static/js/jquery.js"></script>
-<script>
-(function($) {
-
-    function getCookie(name) {
-        var value = "; " + document.cookie;
-        var parts = value.split("; " + name + "=");
-        if (parts.length == 2) return parts.pop().split(";").shift();
-    }
-
-    var mab_cookie = JSON.parse(eval(getCookie("{{cookie_name}}"))); 
-    for(var name in mab_cookie){
-        $('#bandit-'+name+'-'+mab_cookie[name]).addClass("winner");
-    }
-
-})(jQuery.noConflict(true));
-</script>
