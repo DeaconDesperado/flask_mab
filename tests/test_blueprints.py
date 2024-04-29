@@ -51,7 +51,7 @@ class MABTestCase(unittest.TestCase):
         chosen_arm = self.get_arm(rv.headers)["some_bandit"]
         assert app.extensions["mab"].bandits["some_bandit"][chosen_arm]["pulls"] > 0
         assert (
-            json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["some_bandit"]
+            json.loads(parse_cookie(rv.headers["Set-Cookie"])["MAB"])["some_bandit"][0]
             == chosen_arm
         )
 
@@ -70,7 +70,7 @@ class MABTestCase(unittest.TestCase):
             rv = app_client.get("/")
 
         with self.assertRaises(MABConfigException):
-            app_client.set_cookie("MAB", '{"some_bandit": "blue"}', domain="localhost")
+            app_client.set_cookie("MAB", '{"some_bandit": ["blue", true]}', domain="localhost")
             app_client.get("/reward")
 
     def get_arm(self, headers):
