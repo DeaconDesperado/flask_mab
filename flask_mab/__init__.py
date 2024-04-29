@@ -163,7 +163,10 @@ class BanditMiddleware(object):
         @app.after_request
         def remember_bandit_arms(response):
             if request.bandits_save:
-                for bandit_id, (arm, _), in request.bandits.items():
+                for (
+                    bandit_id,
+                    (arm, _),
+                ) in request.bandits.items():
                     # hook event for saving an impression here
                     app.extensions["mab"].bandits[bandit_id].pull_arm(arm)
 

@@ -61,9 +61,9 @@ class MABTestCase(unittest.TestCase):
     def test_from_cookie_reward_decorated(self):
         first_req = self.app_client.get("/show_btn_decorated")
         assert "X-MAB-Debug" in first_req.headers.keys()
-        chosen_arm, _ = json.loads(parse_cookie(first_req.headers["Set-Cookie"])["MAB"])[
-            "color_button"
-        ]
+        chosen_arm, _ = json.loads(
+            parse_cookie(first_req.headers["Set-Cookie"])["MAB"]
+        )["color_button"]
         self.app_client.get("/reward_decorated")
         assert (
             self.app.extensions["mab"].bandits["color_button"][chosen_arm]["reward"] > 0
