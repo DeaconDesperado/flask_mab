@@ -28,7 +28,7 @@ classifiers = [
 [project.optional-dependencies]
 dev = [
   "black==24.4.2",
-  "pytest==8.1.1",
+  "pytest==8.2.0",
   "mock==5.1.0",
   "sphinx-pyproject==0.3.0",
   "sphinx==7.3.7",
