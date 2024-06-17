@@ -15,6 +15,7 @@ jobs:
       url: https://pypi.org/p/flask_mab
     permissions:
       id-token: write
+      contents: write
     steps:
       - uses: actions/checkout@v3
         with:
