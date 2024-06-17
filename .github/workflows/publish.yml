@@ -47,8 +47,7 @@ jobs:
         uses: ncipollo/release-action@v1 
         with:
           artifacts: >- 
-            nektar-linux-x86_64,
-            nektar-aarch64-apple-darwin
+            dist/*
           artifactErrorsFailBuild: true
           allowUpdates: true
           body: ${{steps.github_release.outputs.changelog}}
