@@ -32,7 +32,7 @@ jobs:
       - name: Set commit time to release time
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
       - name: Build dist
-      - run: python -m build .
+        run: python -m build .
       - name: Build docs
         uses: ammaraskar/sphinx-action@0.4
         with:
