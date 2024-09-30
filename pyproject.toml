@@ -13,7 +13,7 @@ readme = "README.rst"
 requires-python = ">=3.9" 
 dependencies = [
   "Flask>=2.2.5",
-  "flask-debugtoolbar==0.15.1",
+  "flask-debugtoolbar==0.16.0",
 ]
 classifiers = [
   "Environment :: Web Environment",
