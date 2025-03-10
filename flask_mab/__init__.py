@@ -1,13 +1,13 @@
 """
-    flask_mab
-    ~~~~~~~~~
+flask_mab
+~~~~~~~~~
 
-    This module implements all the extension logic for
-    Multi-armed bandit experiments on Flask apps.
+This module implements all the extension logic for
+Multi-armed bandit experiments on Flask apps.
 
-    :copyright: (c) 2013 by `Mark Grey <http://www.deacondesperado.com>`_.
+:copyright: (c) 2013 by `Mark Grey <http://www.deacondesperado.com>`_.
 
-    :license: BSD, see LICENSE for more details.
+:license: BSD, see LICENSE for more details.
 """
 
 from flask import current_app, request
