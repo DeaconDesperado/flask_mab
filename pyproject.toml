@@ -30,7 +30,7 @@ dev = [
   "black==25.1.0",
   "pytest==8.3.5",
   "mock==5.2.0",
-  "tox==4.24.2"
+  "tox==4.25.0"
 ]
 docs = [
   "sphinx-pyproject==0.3.0",
