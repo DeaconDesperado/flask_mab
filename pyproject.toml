@@ -28,7 +28,7 @@ classifiers = [
 [project.optional-dependencies]
 dev = [
   "black==25.1.0",
-  "pytest==8.4.0",
+  "pytest==8.4.1",
   "mock==5.2.0",
   "tox==4.26.0"
 ]
