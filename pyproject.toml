@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Flask-MAB"
-version = "3.0.3"
+version = "3.0.4"
 authors = [
   {name = "Mark Grey", email = "mark.asperia@gmail.com"}
 ]
