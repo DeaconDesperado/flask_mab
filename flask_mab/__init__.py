@@ -17,7 +17,6 @@ from flask_mab.mab import Mab
 import types
 from functools import wraps
 
-
 __version__ = "3.0.0"
 
 
